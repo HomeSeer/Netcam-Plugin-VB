@@ -150,6 +150,13 @@ Public Class HSPI
         Dim PED As Devices.PlugExtraData
         dv = HomeSeerSystem.GetDeviceByRef(refID)
         PED = dv.PlugExtraData
+        Camera = GetCameraData(PED)
+        Return Camera
+    End Function
+
+    Function GetCameraData(PED As Devices.PlugExtraData) As CameraData
+        Dim sJSON As String
+        Dim Camera As CameraData
         Try
             sJSON = PED("data")
             sJSON = sJSON.Replace("\r\n  \", "")
@@ -194,18 +201,19 @@ Public Class HSPI
     Public Overloads Function GetJuiDeviceConfigPage(ByVal deviceRef As String) As String
         Dim Camera As CameraData
         Camera = GetCameraData(deviceRef)
-        Dim dcp As New DeviceConfigPageData
-        dcp.pageID = "deviceconfig-page1"
-        dcp.pageName = "Camera Settings"
-        dcp.AddView("lblCamName", "Camera Name", DeviceConfigViewType.Label)
-        dcp.AddView("txtCamName", Camera.Name, DeviceConfigViewType.Text)
-        dcp.AddView("lblCamURL", "Camera URL", DeviceConfigViewType.Label)
-        dcp.AddView("txtCamURL", Camera.URL, DeviceConfigViewType.Text)
-        dcp.AddView("lblCamMaxInput", "Max Images", DeviceConfigViewType.Label)
-        dcp.AddView("txtCamMaxInput", Camera.MaxCount, DeviceConfigViewType.Text)
-        dcp.AddView("btnSubmit", "Submit", DeviceConfigViewType.Button)
+        Dim jpd As New JUIPageData
+        jpd.pageID = "deviceconfig-page1"
+        jpd.pageName = "Camera Settings"
+        jpd.pageType = JUIPageType.DeviceConfig
+        jpd.AddView("lblCamName", "Camera Name", JUIViewType.Label)
+        jpd.AddView("txtCamName", Camera.Name, JUIViewType.Text)
+        jpd.AddView("lblCamURL", "Camera URL", JUIViewType.Label)
+        jpd.AddView("txtCamURL", Camera.URL, JUIViewType.Text)
+        jpd.AddView("lblCamMaxInput", "Max Images", JUIViewType.Label)
+        jpd.AddView("txtCamMaxInput", Camera.MaxCount, JUIViewType.Text)
+        jpd.AddView("btnSubmit", "Submit", JUIViewType.Button)
 
-        Return dcp.BuildJSON
+        Return jpd.BuildJSON
     End Function
 
     Public Overloads Function SaveJuiDeviceConfigPage(pageContent As String, deviceRef As Integer) As String
@@ -301,16 +309,14 @@ Public Class HSPI
         Dim CamRef As String = ""
         Dim Images As Integer = 1
         Dim Interval As Single = 0
-        Dim ddold As New clsJQuery.jqDropList("Cameras_" & UID & sUnique, Pagename, True)
-        Dim txtImages As New clsJQuery.jqTextBox("Images_" & UID & sUnique, "", "1", Pagename, 5, True)
-        Dim txtInterval As New clsJQuery.jqTextBox("Interval_" & UID & sUnique, "", "0", Pagename, 5, True)
         Dim sKey As String
         Dim Camera As CameraData
-        Dim arrRefIDs As List(Of Integer)
-        Dim dd As New Dictionary(Of String, String)
-        Dim sampleSelectList1 As SelectListView
-
-
+        Dim arrCameras As Dictionary(Of Integer, Object)
+        Dim SelectListOptions As New Dictionary(Of String, String)
+        Dim jpd As New JUIPageData
+        jpd.pageID = "events"
+        jpd.pageName = "Camera Settings"
+        jpd.pageType = JUIPageType.Event
 
 
         If Not (ActInfo.DataIn Is Nothing) Then
@@ -330,33 +336,25 @@ Public Class HSPI
             End Select
         Next
 
+        jpd.AddView("lblCamera", "Select Camera:", JUIViewType.Label)
 
-        dd.Add("--Please Select--", "")
+        arrCameras = HomeSeerSystem.GetPropertyByInterface(Id, Devices.EDeviceProperty.PlugExtraData, True)
 
-        arrRefIDs = HomeSeerSystem.GetRefsByInterface(Id, True)
-
-        For Each refID As Integer In arrRefIDs
-            Camera = GetCameraData(refID)
-            dd.AddItem(Camera.Name, refID.ToString, (refID.ToString = CamRef))
+        SelectListOptions.Add("--Please Select--", "")
+        For Each refID As Integer In arrCameras.Keys
+            Camera = GetCameraData(arrCameras(refID))
+            SelectListOptions.Add(Camera.Name, refID.ToString)
         Next
 
-        stb.Append("Select Camera:")
-        stb.Append(dd.Build)
+        jpd.AddView("Cameras_" & UID & sUnique, SelectListOptions, JUIViewType.SelectList)
 
-        txtImages.defaultText = Images
+        jpd.AddView("lblImages", "Images To Take:", JUIViewType.Label)
+        jpd.AddView("Images_" & UID & sUnique, Images, JUIViewType.Text)
 
-        stb.Append("Images To Take:")
-        stb.Append(txtImages.Build)
+        jpd.AddView("lblInterval", "Seconds Between Images:", JUIViewType.Label)
+        jpd.AddView("Interval_" & UID & sUnique, Interval, JUIViewType.Text)
 
-        If Images > 1 Then
-            txtInterval.defaultText = Interval
-
-            stb.Append("Seconds Between Images:")
-            stb.Append(txtInterval.Build)
-
-        End If
-
-        Return stb.ToString
+        Return jpd.BuildHTML
     End Function
 
     Public Overloads Function ActionProcessPostUI(ByVal PostData As Collections.Specialized.NameValueCollection, ByVal ActInfo As TrigActInfo) As Devices.MultiReturn
@@ -427,56 +425,56 @@ Public Class HSPI
         Return Ret
     End Function
 
-    'Public Function ActionFormatUI(ByVal ActInfo As IPlugInAPI.strTrigActInfo) As String Implements HomeSeerAPI.IPlugInAPI.ActionFormatUI
-    '    Dim stb As New StringBuilder
-    '    Dim sKey As String
-    '    Dim CamRef As String = ""
-    '    Dim Images As Integer = 1
-    '    Dim Interval As Single = 0
-    '    Dim Cam As Camera
-    '    Dim UID As String
-    '    UID = ActInfo.UID.ToString
+    Public Overloads Function ActionFormatUI(ByVal ActInfo As TrigActInfo) As String
+        Dim stb As New StringBuilder
+        Dim sKey As String
+        Dim CamRef As String = ""
+        Dim Images As Integer = 1
+        Dim Interval As Single = 0
+        Dim Camera As CameraData
+        Dim UID As String
+        UID = ActInfo.UID.ToString
 
-    '    If Not (ActInfo.DataIn Is Nothing) Then
-    '        DeSerializeObject(ActInfo.DataIn, Action)
-    '    End If
+        If Not (ActInfo.DataIn Is Nothing) Then
+            DeSerializeObject(ActInfo.DataIn, action)
+        End If
 
-    '    For Each sKey In Action.Keys
-    '        Select Case True
-    '            Case InStr(sKey, "Cameras_" & UID) > 0
-    '                CamRef = Action(sKey)
-    '            Case InStr(sKey, "Images_" & UID) > 0
-    '                Images = Action(sKey)
-    '            Case InStr(sKey, "Interval_" & UID) > 0
-    '                Interval = Action(sKey)
-    '        End Select
-    '    Next
-    '    Cam = arrCameras(CamRef.ToString)
-    '    If Cam IsNot Nothing Then
-    '        If Images > 0 Then
-    '            stb.Append(" the system will take ")
-    '            Select Case Images
-    '                Case 1
-    '                    stb.Append(" a picture ")
-    '                Case Is > 1
-    '                    stb.Append(" " & Images.ToString & " pictures ")
-    '            End Select
-    '            stb.Append("with the " & Cam.Name & " camera")
-    '            Select Case Images
-    '                Case 1
-    '                    stb.Append(".")
-    '                Case Is > 1
-    '                    stb.Append(" at " & Interval.ToString & " second intervals between images.")
-    '            End Select
-    '        Else
-    '            stb.Append(" no images will be taken. ")
-    '        End If
-    '    Else
-    '        stb.Append(" ERROR - Camera was not found. ")
-    '    End If
+        For Each sKey In action.Keys
+            Select Case True
+                Case InStr(sKey, "Cameras_" & UID) > 0
+                    CamRef = action(sKey)
+                Case InStr(sKey, "Images_" & UID) > 0
+                    Images = action(sKey)
+                Case InStr(sKey, "Interval_" & UID) > 0
+                    Interval = action(sKey)
+            End Select
+        Next
+        Camera = GetCameraData(CamRef.ToString)
+        If Camera IsNot Nothing Then
+            If Images > 0 Then
+                stb.Append(" the system will take ")
+                Select Case Images
+                    Case 1
+                        stb.Append(" a picture ")
+                    Case Is > 1
+                        stb.Append(" " & Images.ToString & " pictures ")
+                End Select
+                stb.Append("with the " & Camera.Name & " camera")
+                Select Case Images
+                    Case 1
+                        stb.Append(".")
+                    Case Is > 1
+                        stb.Append(" at " & Interval.ToString & " second intervals between images.")
+                End Select
+            Else
+                stb.Append(" no images will be taken. ")
+            End If
+        Else
+            stb.Append(" ERROR - Camera was not found. ")
+        End If
 
-    '    Return stb.ToString
-    'End Function
+        Return stb.ToString
+    End Function
 
     Public Shadows Function ActionCount() As Integer
         Return 1

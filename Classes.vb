@@ -1,22 +1,27 @@
 ﻿Imports Newtonsoft.Json
 Imports HomeSeer.Jui.Views
 Public Module Classes
-    Public Class jqDropList
 
-    End Class
-
-    Public Enum DeviceConfigViewType
+    Public Enum JUIPageType
+        Settings
+        DeviceConfig
+        [Event]
+    End Enum
+    Public Enum JUIViewType
         [Label]
         [Text]
         [Button]
+        [SelectList]
     End Enum
 
-    Public Class DeviceConfigPageData
+    Public Class JUIPageData
         Public Property pageID As String
         Public Property pageName As String
+
+        Public Property pageType As JUIPageType
         Dim Views As New List(Of DeviceConfigView)
 
-        Public Sub AddView(ByVal name As String, ByVal value As String, ByVal type As DeviceConfigViewType)
+        Public Sub AddView(ByVal name As String, ByVal value As Object, ByVal type As JUIViewType)
             Dim dcv As New DeviceConfigView
             dcv.Name = name
             dcv.Value = value
@@ -24,34 +29,59 @@ Public Module Classes
             Views.Add(dcv)
         End Sub
 
+        Public Function BuildHTML() As String
+            Dim sHTML As String
+            sHTML = BuildPage.ToHtml
+            Return sHTML
+        End Function
+
         Public Function BuildJSON() As String
-            Dim ConfigPage = Page.Factory.CreateDeviceConfigPage(pageID, "Camera Settings")
+            Dim sJSON As String
+            sJSON = BuildPage.ToJsonString
+            Return sJSON
+        End Function
+
+        Function BuildPage() As Page
+            Dim JUIPage As Page = Nothing
             Dim juiLabel As LabelView
             Dim juiInput As InputView
             Dim juiButton As ButtonView
-            Dim sJSON As String
+            Dim juiSelect As SelectListView
+
+            Select Case pageType
+                Case JUIPageType.Settings
+                    JUIPage = Page.Factory.CreateSettingPage(pageID, pageName)
+                Case JUIPageType.DeviceConfig
+                    JUIPage = Page.Factory.CreateDeviceConfigPage(pageID, pageName)
+                Case JUIPageType.Event
+                    JUIPage = Page.Factory.CreateDeviceConfigPage(pageID, pageName)
+            End Select
 
             For Each View As DeviceConfigView In Views
                 Select Case View.Type
-                    Case DeviceConfigViewType.Label
+                    Case JUIViewType.Label
                         juiLabel = New LabelView(pageID & "-" & View.Name, Nothing, View.Value)
-                        ConfigPage.AddView(juiLabel)
-                    Case DeviceConfigViewType.Text
+                        JUIPage.AddView(juiLabel)
+                    Case JUIViewType.Text
                         juiInput = New InputView(pageID & "-" & View.Name, View.Value, HomeSeer.Jui.Types.EInputType.Text)
-                        ConfigPage.AddView(juiInput)
-                    Case DeviceConfigViewType.Button
+                        JUIPage.AddView(juiInput)
+                    Case JUIViewType.Button
                         juiButton = New ButtonView(pageID & "-" & View.Name, View.Value, View.Value)
-                        ConfigPage.AddView(juiButton)
+                        JUIPage.AddView(juiButton)
+                    Case JUIViewType.SelectList
+                        Dim SelectOptions As Dictionary(Of String, String)
+                        SelectOptions = View.Value
+                        juiSelect = New SelectListView(pageID & "-" & View.Name, View.Name, SelectOptions.Values.ToList, SelectOptions.Keys.ToList)
+                        JUIPage.AddView(juiSelect)
                 End Select
             Next
-            sJSON = ConfigPage.ToJsonString
-            Return sJSON
+            Return JUIPage
         End Function
 
         Class DeviceConfigView
             Public Property Name As String
-            Public Property Value As String
-            Public Property Type As DeviceConfigViewType
+            Public Property Value As Object
+            Public Property Type As JUIViewType
         End Class
     End Class
 
