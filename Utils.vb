@@ -258,4 +258,9 @@ Module Utils
         sb.Append(item)
         sb.Append(Environment.NewLine)
     End Sub
+
+    <Extension()>
+    Public Function ToInt(ByRef s As String) As Integer
+        Return CInt(s)
+    End Function
 End Module
