@@ -12,9 +12,9 @@ Imports HomeSeer.PluginSdk.Devices.Identification
 Public Class HSPI
     Inherits AbstractPlugin
 
+    Protected Overrides ReadOnly Property SettingsFileName As String = "NetCamPlugin.ini"
     Public Overrides ReadOnly Property Id As String = "HSPI_NetCam"
     Public Overrides ReadOnly Property Name As String = "NetCam Plugin"
-    Protected Overrides ReadOnly Property SettingsFileName As String = "NetCamPlugin.ini"
     Public Overrides ReadOnly Property SupportsConfigDevice As Boolean = True
     Public Overrides ReadOnly Property ActionCount As Integer = 1
     Public Overrides ReadOnly Property TriggerCount As Integer = 1
@@ -28,18 +28,12 @@ Public Class HSPI
 
     Public Property ExePath As String
     Public Property FilePath As String
-
-    Dim actions As New hsCollection
-    Dim action As action
-    Dim triggers As New hsCollection
-    Dim trigger As trigger
-    Dim Commands As New hsCollection
     Const Pagename = "Events"
-
 
     Public Sub New()
         ExePath = System.IO.Path.GetDirectoryName(System.AppDomain.CurrentDomain.BaseDirectory)
         FilePath = FixPath(ExePath & "/html/" & Id & "/images/")
+        'this will output debug information from the pluinSDK to the console window.
         LogDebug = True
     End Sub
 
@@ -89,7 +83,7 @@ Public Class HSPI
     End Function
 
     Protected Overrides Sub BeforeReturnStatus()
-
+        'we don't need to do anything here.
     End Sub
 
     'This is a custom function..., you can name it whatever you like as long as you change the name in the corresponding html page
@@ -243,7 +237,7 @@ Public Class HSPI
         For Each CC In colSend
             Camera = GetCameraData(CC.TargetRef)
             TakePicture(Camera)
-            'See if we nned to fire any of our triggers on the events page
+            'See if we need to fire any of our triggers on the events page
             CheckTriggers(CC.TargetRef)
         Next
     End Sub
@@ -261,20 +255,21 @@ Public Class HSPI
 
     Public Overloads Function GetJuiDeviceConfigPage(ByVal deviceRef As String) As String
         Dim Camera As CameraData
+        Dim JUIPage As Page = Nothing
+        Dim pageID As String = "deviceconfig-page1"
         Camera = GetCameraData(deviceRef)
-        Dim jpd As New JUIPageData
-        jpd.pageID = "deviceconfig-page1"
-        jpd.pageName = "Camera Settings"
-        jpd.pageType = EPageType.DeviceConfig
+
+        JUIPage = PageFactory.CreateDeviceConfigPage(pageID, "Camera Settings").Page
 
         'For the LoadCameraData function to work correctly, the names of the input fields MUST correspond to the property names of your object.
         'If you wish to name them something different, the LoadCameraData will need a Select Case statement to match the input names to the properties.
 
-        jpd.AddView("Name", Camera.Name, EViewType.Input)
-        jpd.AddView("URL", Camera.URL, EViewType.Input)
-        jpd.AddView("MaxCount", Camera.MaxCount, EViewType.Input, EInputType.Number)
+        JUIPage.AddView(New InputView(pageID & "-Name", "Name", Camera.Name))
+        JUIPage.AddView(New InputView(pageID & "-URL", "URL", Camera.URL))
+        JUIPage.AddView(New InputView(pageID & "-MaxCount", "MaxCount", Camera.MaxCount, EInputType.Number))
 
-        Return jpd.BuildJSON
+
+        Return JUIPage.ToJsonString
     End Function
 
     Public Function GETPED() As Dictionary(Of Integer, Object)
@@ -357,10 +352,5 @@ Public Class HSPI
         'this creates the device in HomeSeer using the bundled data.
         HomeSeerSystem.CreateDevice(dd)
     End Sub
-
-    Shared Function __Assign(Of T)(ByRef target As T, value As T) As T
-        target = value
-        Return value
-    End Function
 End Class
 

@@ -78,6 +78,8 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Classes\Taken_Picture_Trigger.vb" />
+    <Compile Include="Classes\Take_Picture_Action.vb" />
     <Compile Include="Globals.vb" />
     <Compile Include="HSPI.vb" />
     <Compile Include="HTMLPages.vb" />
@@ -97,7 +99,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
     <Compile Include="Program.vb" />
-    <Compile Include="Classes.vb" />
+    <Compile Include="Classes\GeneralClasses.vb" />
     <Compile Include="Utils.vb" />
   </ItemGroup>
   <ItemGroup>
