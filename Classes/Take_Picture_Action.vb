@@ -1,6 +1,7 @@
 ﻿Imports HomeSeer.Jui.Views
 Imports HomeSeer.Jui.Types
 Imports HomeSeer.PluginSdk.Events
+Imports HomeSeer.PluginSdk
 
 Public Class Take_Picture_Action
     Inherits AbstractActionType
@@ -16,7 +17,6 @@ Public Class Take_Picture_Action
         MyBase.Finalize()
     End Sub
 
-    Private Const ActionName As String = "Take a Picture"
     Private ReadOnly Property SelectListId1 As String
         Get
             Return $"{PageId}-selectlist1"
@@ -35,15 +35,21 @@ Public Class Take_Picture_Action
         End Get
     End Property
 
-    Private ReadOnly Property Listener As ActionTypeCollection.IActionTypeListener
+    Private ReadOnly Property Listener As IWriteLogActionListener
         Get
             Return ActionListener
         End Get
     End Property
 
+    Interface IWriteLogActionListener
+        Inherits ActionTypeCollection.IActionTypeListener
+        Sub WriteLog(ByVal logType As Logging.ELogType, ByVal message As String)
+    End Interface
+
     Protected Overrides Function GetName() As String
-        Return ActionName
+        Return "Take a Picture"
     End Function
+
     Public Overrides Function OnRunAction() As Boolean
         Dim Camera As CameraData
         Dim CamRef As String = ""
@@ -65,7 +71,6 @@ Public Class Take_Picture_Action
                     Interval = oInputView.Value
             End Select
         Next
-
         Try
             Camera = _plugin.GetCameraData(CamRef.ToString)
             If Camera IsNot Nothing Then
@@ -87,6 +92,73 @@ Public Class Take_Picture_Action
     Public Overrides Function ReferencesDeviceOrFeature(ByVal devOrFeatRef As Integer) As Boolean
         Return False
     End Function
+
+    Protected Overrides Function OnConfigItemUpdate(configViewChange As AbstractView) As Boolean
+        'Select Case configViewChange.Id
+        '    Case InputId1
+        '        'Make a list of our current views.
+        '        Dim Views As New Dictionary(Of String, AbstractView)
+        '        For Each view As AbstractView In ConfigPage.Views
+        '            Views.Add(view.Id, view)
+        '        Next
+        '        Dim InputID1Value As String
+        '        InputID1Value = configViewChange.GetStringValue
+        '        If IsNumeric(InputID1Value) AndAlso InputID1Value > 1 Then
+        '            'check to see if we already have our interval input box.
+        '            'if we don't then add it.
+        '            If Not Views.Keys.Contains(InputId2) Then
+        '                Dim oInputView = New InputView(InputId2, "Interval")
+        '                ConfigPage.AddView(oInputView)
+        '            End If
+        '        Else
+        '            If Views.Keys.Contains(InputId2) Then
+        '                'remove the interval input box.
+        '                Views.Remove(InputId2)
+        '                'reset the views
+        '                ConfigPage.SetViews(Views.Values)
+        '            End If
+        '        End If
+        'End Select
+        Return True
+    End Function
+
+    Protected Overrides Sub OnEditAction(ByVal viewChanges As Page)
+        'Make a list of our current views.
+        Dim Views As New Dictionary(Of String, AbstractView)
+        For Each view As AbstractView In ConfigPage.Views
+            Views.Add(view.Id, view)
+        Next
+
+        For Each changedView In viewChanges.Views
+
+            If Not ConfigPage.ContainsViewWithId(changedView.Id) Then
+                Continue For
+            End If
+
+            ConfigPage.UpdateViewValueById(changedView.Id, changedView.GetStringValue)
+
+            Select Case changedView.Id
+                Case InputId1
+                    Dim InputID1Value As String
+                    InputID1Value = changedView.GetStringValue
+                    If IsNumeric(InputID1Value) AndAlso InputID1Value > 1 Then
+                        'check to see if we already have our interval input box.
+                        'if we don't then add it.
+                        If Not Views.Keys.Contains(InputId2) Then
+                            Dim oInputView = New InputView(InputId2, "Interval")
+                            ConfigPage.AddView(oInputView)
+                        End If
+                    Else
+                        If Views.Keys.Contains(InputId2) Then
+                            'remove the interval input box.
+                            Views.Remove(InputId2)
+                            'reset the views
+                            ConfigPage.SetViews(Views.Values)
+                        End If
+                    End If
+            End Select
+        Next
+    End Sub
 
     Public Overrides Function IsFullyConfigured() As Boolean
         Dim Configured As Boolean = True
@@ -142,7 +214,8 @@ Public Class Take_Picture_Action
 
     Protected Overrides Sub OnNewAction()
         Dim selectList As SelectListView
-        Dim SelectListOptions As New Dictionary(Of String, String)
+        Dim ListOptionNames As New List(Of String)
+        Dim ListOptionRefIDs As New List(Of String)
         Dim oInputView As InputView
         Dim arrCameras As Dictionary(Of Integer, Object)
         Dim refID As String
@@ -153,50 +226,13 @@ Public Class Take_Picture_Action
         For Each kvp As KeyValuePair(Of Integer, Object) In arrCameras
             refID = kvp.Key
             Camera = _plugin.GetCameraData(kvp.Value)
-            SelectListOptions.Add(Camera.Name, refID.ToString)
+            ListOptionNames.Add(Camera.Name)
+            ListOptionRefIDs.Add(refID.ToString)
         Next
-        selectList = New SelectListView(SelectListId1, "Cameras", SelectListOptions.Keys.ToList, SelectListOptions.Values.ToList)
+        selectList = New SelectListView(SelectListId1, "Cameras", ListOptionNames, ListOptionRefIDs)
         ConfigPage.AddView(selectList)
         oInputView = New InputView(InputId1, "Number of Pictures", EInputType.Number)
         ConfigPage.AddView(oInputView)
-    End Sub
-
-    Protected Overrides Sub OnEditAction(ByVal viewChanges As Page)
-        'Make a list of our current views.
-        Dim Views As New Dictionary(Of String, AbstractView)
-        For Each view As AbstractView In ConfigPage.Views
-            Views.Add(view.Id, view)
-        Next
-
-        For Each changedView In viewChanges.Views
-
-            If Not ConfigPage.ContainsViewWithId(changedView.Id) Then
-                Continue For
-            End If
-
-            ConfigPage.UpdateViewValueById(changedView.Id, changedView.GetStringValue)
-
-            Select Case changedView.Id
-                Case InputId1
-                    Dim InputID1Value As String
-                    InputID1Value = changedView.GetStringValue
-                    If IsNumeric(InputID1Value) AndAlso InputID1Value > 1 Then
-                        'check to see if we already have our interval input box.
-                        'if we don't then add it.
-                        If Not Views.Keys.Contains(InputId2) Then
-                            Dim oInputView = New InputView(InputId2, "Interval")
-                            ConfigPage.AddView(oInputView)
-                        End If
-                    Else
-                        If Views.Keys.Contains(InputId2) Then
-                            'remove the interval input box.
-                            Views.Remove(InputId2)
-                            'reset the views
-                            ConfigPage.SetViews(Views.Values)
-                        End If
-                    End If
-            End Select
-        Next
     End Sub
 
     Public Overrides Function GetPrettyString() As String
@@ -235,3 +271,4 @@ Public Class Take_Picture_Action
         Return PrettyString
     End Function
 End Class
+

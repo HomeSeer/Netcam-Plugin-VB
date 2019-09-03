@@ -1,16 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28803.352
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "HSPI_NetCam", "HSPI_NetCam.vbproj", "{298685C7-0348-4693-858A-918149D72F0D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{BB55D0C1-B226-4FBA-AE15-DEA41ACBE33D}"
-	ProjectSection(SolutionItems) = preProject
-		..\..\HomeSeer\HomeSeer\html\HSPI_NetCam\editcameras.html = ..\..\HomeSeer\HomeSeer\html\HSPI_NetCam\editcameras.html
-		..\..\HomeSeer\HomeSeer\html\HSPI_NetCam\sample-blank.html = ..\..\HomeSeer\HomeSeer\html\HSPI_NetCam\sample-blank.html
-		..\..\HomeSeer\HomeSeer\html\HSPI_NetCam\viewimages.html = ..\..\HomeSeer\HomeSeer\html\HSPI_NetCam\viewimages.html
-	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

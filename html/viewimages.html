@@ -1,0 +1,40 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=no">
+    <meta name="description" content="">
+    <meta name="author" content="HomeSeer">
+
+    {{includefile 'bootstrap/css/page_common.css'}}
+
+    <title>View Camera Images</title>
+
+</head>
+<body class="homeseer-skin">
+
+    {{includefile 'header.html'}}
+    {{includefile 'navbar.html'}}
+
+    <div class="container" id="main_content">        
+        {{plugin_function 'HSPI_NetCam' 'PagePreLoad' ['cameratabs']}}
+    </div>
+    <div class="tab-content container">
+        {{plugin_function 'HSPI_NetCam' 'PagePreLoad' ['cameraimages']}}
+    </div>
+
+    {{includefile 'bootstrap/js/page_common.js'}}
+    <script type="text/JavaScript">
+        function PostBackFunction(e) {
+            alert('start');
+       
+    }
+
+    function finish() {
+        var devicesPage = window.location.origin + "/devices.html";
+        window.location.assign(devicesPage);
+    }
+</script>
+</body>
+</html>

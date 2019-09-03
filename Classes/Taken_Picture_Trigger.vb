@@ -17,7 +17,6 @@ Public Class Taken_Picture_Trigger
         MyBase.Finalize()
     End Sub
 
-    Private Const TriggerName As String = "Taken a Picture"
     Private ReadOnly Property SelectListId1 As String
         Get
             Return $"{PageId}-selectlist1"
@@ -46,6 +45,28 @@ Public Class Taken_Picture_Trigger
 
     Public Overrides Function IsTriggerTrue(isCondition As Boolean) As Boolean
         '???? What is this for ??????
+        Return True
+    End Function
+
+    Public Function IsTrigger(refID As Integer) As Boolean
+        Dim CorrectTrigger As Boolean = False
+        Dim selectList As SelectListView
+
+        For Each view As AbstractView In ConfigPage.Views
+            Select Case view.Id
+                Case SelectListId1
+                    selectList = TryCast(view, SelectListView)
+                    If selectList.OptionKeys(selectList.Selection) = refID Then
+                        CorrectTrigger = True
+                        Exit For
+                    End If
+            End Select
+        Next
+
+        Return CorrectTrigger
+    End Function
+
+    Protected Overrides Function OnConfigItemUpdate(configViewChange As AbstractView) As Boolean
         Return True
     End Function
 
@@ -89,19 +110,7 @@ Public Class Taken_Picture_Trigger
         Return False
     End Function
 
-    Protected Overrides Function OnEditTrigger(viewChanges As Page) As Boolean
-        For Each changedView In viewChanges.Views
-
-            If Not ConfigPage.ContainsViewWithId(changedView.Id) Then
-                Continue For
-            End If
-
-            ConfigPage.UpdateViewValueById(changedView.Id, changedView.GetStringValue)
-        Next
-        Return True
-    End Function
-
     Protected Overrides Function GetName() As String
-        Return TriggerName
+        Return "Taken a Picture"
     End Function
 End Class

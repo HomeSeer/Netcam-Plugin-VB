@@ -8,6 +8,7 @@ Imports System.Reflection
 Imports HomeSeer.Jui.Types
 Imports HomeSeer.PluginSdk.Devices
 Imports HomeSeer.PluginSdk.Devices.Identification
+Imports System.Runtime.Serialization.Formatters
 
 Public Class HSPI
     Inherits AbstractPlugin
@@ -16,9 +17,7 @@ Public Class HSPI
     Public Overrides ReadOnly Property Id As String = "HSPI_NetCam"
     Public Overrides ReadOnly Property Name As String = "NetCam Plugin"
     Public Overrides ReadOnly Property SupportsConfigDevice As Boolean = True
-    Public Overrides ReadOnly Property ActionCount As Integer = 1
-    Public Overrides ReadOnly Property TriggerCount As Integer = 1
-    Public Overrides ReadOnly Property HasTriggers As Boolean = True
+
 
     'A list of pages and page titles
     Public lstPages As SortedList(Of String, String) = New SortedList(Of String, String) From {
@@ -48,39 +47,45 @@ Public Class HSPI
         For Each sPage As String In lstPages.Keys
             sPageTitle = lstPages(sPage)
             HomeSeerSystem.RegisterFeaturePage(Id, sPage & ".html", sPageTitle)
+            HomeSeerSystem.RegisterDeviceIncPage(Id, sPage & ".html", sPageTitle)
         Next
         ActionTypes.AddActionType(GetType(Take_Picture_Action))
         TriggerTypes.AddTriggerType(GetType(Taken_Picture_Trigger))
         Console.WriteLine("Initialized")
     End Sub
 
-    Protected Overrides Function OnSettingsChange(pages As List(Of Page)) As Boolean
-        Console.WriteLine("OnSettingsChange")
-
-        For Each pageDelta In pages
-            Dim page = Settings(pageDelta.Id)
-
-            For Each settingDelta In pageDelta.Views
-                page.UpdateViewById(settingDelta)
-
-                Try
-                    Dim newValue = settingDelta.GetStringValue()
-
-                    If newValue Is Nothing Then
-                        Continue For
-                    End If
-
-                    HomeSeerSystem.SaveINISetting(SettingsSectionName, settingDelta.Id, newValue, SettingsFileName)
-                Catch exception As InvalidOperationException
-                    Console.WriteLine(exception)
-                End Try
-            Next
-
-            Settings(pageDelta.Id) = page
-        Next
-
+    Protected Overrides Function OnSettingChange(ByVal pageId As String, ByVal currentView As AbstractView, ByVal changedView As AbstractView) As Boolean
+        'Not doing anything here
         Return True
     End Function
+
+    'Protected Function OnSettingsChange(pages As List(Of Page)) As Boolean
+    '    Console.WriteLine("OnSettingsChange")
+
+    '    For Each pageDelta In pages
+    '        Dim page = Settings(pageDelta.Id)
+
+    '        For Each settingDelta In pageDelta.Views
+    '            page.UpdateViewById(settingDelta)
+
+    '            Try
+    '                Dim newValue = settingDelta.GetStringValue()
+
+    '                If newValue Is Nothing Then
+    '                    Continue For
+    '                End If
+
+    '                HomeSeerSystem.SaveINISetting(SettingsSectionName, settingDelta.Id, newValue, SettingsFileName)
+    '            Catch exception As InvalidOperationException
+    '                Console.WriteLine(exception)
+    '            End Try
+    '        Next
+
+    '        Settings(pageDelta.Id) = page
+    '    Next
+
+    '    Return True
+    'End Function
 
     Protected Overrides Sub BeforeReturnStatus()
         'we don't need to do anything here.
@@ -233,22 +238,35 @@ Public Class HSPI
     Public Overrides Sub SetIOMulti(colSend As List(Of Devices.Controls.ControlEvent))
         Dim Camera As CameraData
         Dim CC As Devices.Controls.ControlEvent
+        Dim ParentRef As String
+        Dim dv As HsDevice
 
         For Each CC In colSend
-            Camera = GetCameraData(CC.TargetRef)
+            dv = HomeSeerSystem.GetDeviceByRef(CC.TargetRef)
+            If dv.Relationship = ERelationship.Feature Then
+                ParentRef = dv.AssociatedDevices(0)
+            Else
+                ParentRef = dv.Ref
+            End If
+            Camera = GetCameraData(ParentRef)
             TakePicture(Camera)
             'See if we need to fire any of our triggers on the events page
-            CheckTriggers(CC.TargetRef)
+            CheckTriggers(ParentRef)
         Next
     End Sub
 
     Public Sub CheckTriggers(RefID As String)
         Dim TrigsToCheck() As TrigActInfo
+        Dim TpT As Taken_Picture_Trigger
+        Dim oTrigData As New Object
         TrigsToCheck = HomeSeerSystem.TriggerMatches(Name, 1, -1)
         If TrigsToCheck IsNot Nothing AndAlso TrigsToCheck.Count > 0 Then
             For Each TC As TrigActInfo In TrigsToCheck
+                TpT = New Taken_Picture_Trigger(TC.TANumber, TC.evRef, TC.DataIn)
                 'if the selected camera refID matches the refID of the camera that took the picture then fire the trigger.
-                HomeSeerSystem.TriggerFire(Name, TC)
+                If TpT.IsTrigger(RefID) Then
+                    HomeSeerSystem.TriggerFire(Name, TC)
+                End If
             Next
         End If
     End Sub
