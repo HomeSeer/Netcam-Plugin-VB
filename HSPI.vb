@@ -9,9 +9,12 @@ Imports HomeSeer.Jui.Types
 Imports HomeSeer.PluginSdk.Devices
 Imports HomeSeer.PluginSdk.Devices.Identification
 Imports System.Runtime.Serialization.Formatters
+Imports HomeSeer.PluginSdk.Logging
+Imports HSPI_NETCAM
 
 Public Class HSPI
     Inherits AbstractPlugin
+    Implements Take_Picture_Action.IWriteLogActionListener, Taken_Picture_Trigger.IPictureTakenTriggerListener
 
     Protected Overrides ReadOnly Property SettingsFileName As String = "NetCamPlugin.ini"
     Public Overrides ReadOnly Property Id As String = "HSPI_NetCam"
@@ -262,7 +265,7 @@ Public Class HSPI
         TrigsToCheck = HomeSeerSystem.TriggerMatches(Name, 1, -1)
         If TrigsToCheck IsNot Nothing AndAlso TrigsToCheck.Count > 0 Then
             For Each TC As TrigActInfo In TrigsToCheck
-                TpT = New Taken_Picture_Trigger(TC.TANumber, TC.evRef, TC.DataIn)
+                TpT = New Taken_Picture_Trigger(TC.UID, TC.evRef, TC.SubTANumber-1, TC.DataIn)
                 'if the selected camera refID matches the refID of the camera that took the picture then fire the trigger.
                 If TpT.IsTrigger(RefID) Then
                     HomeSeerSystem.TriggerFire(Name, TC)
@@ -290,7 +293,7 @@ Public Class HSPI
         Return JUIPage.ToJsonString
     End Function
 
-    Public Function GETPED() As Dictionary(Of Integer, Object)
+    Public Function GETPED() As Dictionary(Of Integer, Object) Implements Take_Picture_Action.IWriteLogActionListener.GETPED, Taken_Picture_Trigger.IPictureTakenTriggerListener.GETPED
         Return HomeSeerSystem.GetPropertyByInterface(Id, EProperty.PlugExtraData, True)
     End Function
 
@@ -370,5 +373,10 @@ Public Class HSPI
         'this creates the device in HomeSeer using the bundled data.
         HomeSeerSystem.CreateDevice(dd)
     End Sub
+
+    Public Sub WriteLog(logType As ELogType, message As String) Implements Take_Picture_Action.IWriteLogActionListener.WriteLog
+        HomeSeerSystem.WriteLog(logType, message, Name)
+    End Sub
+
 End Class
 

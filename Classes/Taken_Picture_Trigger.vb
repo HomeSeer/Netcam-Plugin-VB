@@ -9,13 +9,19 @@ Public Class Taken_Picture_Trigger
         MyBase.New
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal eventRef As Integer, ByVal dataIn As Byte())
-        MyBase.New(id, eventRef, dataIn)
+    Public Sub New(ByVal id As Integer, ByVal eventRef As Integer, ByVal selectedSubTriggerIndex As Integer, ByVal dataIn As Byte())
+        MyBase.New(id, eventRef, selectedSubTriggerIndex, dataIn)
     End Sub
 
     Protected Overrides Sub Finalize()
         MyBase.Finalize()
     End Sub
+
+    Private ReadOnly Property Listener As IPictureTakenTriggerListener
+        Get
+            Return TriggerListener
+        End Get
+    End Property
 
     Private ReadOnly Property SelectListId1 As String
         Get
@@ -31,7 +37,7 @@ Public Class Taken_Picture_Trigger
         Dim refID As String
         Dim Camera As CameraData
 
-        arrCameras = _plugin.GETPED
+        arrCameras = Listener.GETPED()
 
         For Each kvp As KeyValuePair(Of Integer, Object) In arrCameras
             refID = kvp.Key
@@ -39,8 +45,10 @@ Public Class Taken_Picture_Trigger
             ListOptionNames.Add(Camera.Name)
             ListOptionRefIDs.Add(refID.ToString)
         Next
-        selectList = New SelectListView(SelectListId1, "Cameras", ListOptionNames, ListOptionRefIDs)
-        ConfigPage.AddView(selectList)
+        'selectList = New SelectListView(SelectListId1, "Cameras", ListOptionNames, ListOptionRefIDs)
+        Dim pf As PageFactory = PageFactory.CreateEventTriggerPage(PageId, "Taken a Picture").WithDropDownSelectList(SelectListId1, "Cameras", ListOptionNames, ListOptionRefIDs)
+        'ConfigPage.AddView(selectList)
+        ConfigPage = pf.Page
     End Sub
 
     Public Overrides Function IsTriggerTrue(isCondition As Boolean) As Boolean
@@ -80,6 +88,7 @@ Public Class Taken_Picture_Trigger
                     selectList = TryCast(view, SelectListView)
                     'nothing selected? return false!!
                     If selectList?.GetSelectedOption() = "" Then
+                        'Console.WriteLine("Select List is Nothing")
                         Configured = False
                         Exit For
                     End If
@@ -113,4 +122,10 @@ Public Class Taken_Picture_Trigger
     Protected Overrides Function GetName() As String
         Return "Taken a Picture"
     End Function
+
+    Interface IPictureTakenTriggerListener
+        Inherits TriggerTypeCollection.ITriggerTypeListener
+
+        Function GETPED() As Dictionary(Of Integer, Object)
+    End Interface
 End Class

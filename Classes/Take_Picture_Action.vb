@@ -44,6 +44,7 @@ Public Class Take_Picture_Action
     Interface IWriteLogActionListener
         Inherits ActionTypeCollection.IActionTypeListener
         Sub WriteLog(ByVal logType As Logging.ELogType, ByVal message As String)
+        Function GETPED() As Dictionary(Of Integer, Object)
     End Interface
 
     Protected Overrides Function GetName() As String
@@ -221,7 +222,7 @@ Public Class Take_Picture_Action
         Dim refID As String
         Dim Camera As CameraData
 
-        arrCameras = _plugin.GETPED
+        arrCameras = Listener.GETPED()
 
         For Each kvp As KeyValuePair(Of Integer, Object) In arrCameras
             refID = kvp.Key
