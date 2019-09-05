@@ -5,24 +5,6 @@ Imports System.Net
 Imports System.Runtime.Serialization.Formatters
 
 Module Utils
-    Public Sub CheckForFeaturePages()
-        'We should be in the default HomeSeer folder.
-        'Check if we have a folder and if all the pages are there.
-        'If one is missing, then build it now.
-        Dim path As String = _plugin.ExePath & "/" & _plugin.Id
-        If Not Directory.Exists(path) Then
-            Directory.CreateDirectory(path)
-        End If
-        Dim sPages As String() = Directory.GetFiles(path)
-        Dim sPageTitle As String = ""
-        For Each sPage As String In _plugin.lstPages.Keys
-            If Not sPages.Contains(sPage) Then
-                'If you have .html feature pages built, you can copy them instead of building them in code
-                'BuildPage(sPage, sPageTitle)
-            End If
-        Next
-    End Sub
-
     Public Sub TakePicture(Camera As CameraData)
         Try
             'take a picture from a given camera
@@ -195,62 +177,6 @@ Module Utils
                 Exit Function
             End If
         Loop
-    End Function
-
-    Public Function SerializeObject(ByRef ObjIn As Object, ByRef bteOut() As Byte) As Boolean
-        If ObjIn Is Nothing Then Return False
-        Dim str As New MemoryStream
-        Dim sf As New Binary.BinaryFormatter
-
-        Try
-            sf.Serialize(str, ObjIn)
-            ReDim bteOut(CInt(str.Length - 1))
-            bteOut = str.ToArray
-            Return True
-        Catch ex As Exception
-            Console.Write("Error: Serializing object " & ObjIn.ToString & " :" & ex.Message)
-            Return False
-        End Try
-
-    End Function
-    Public Function DeSerializeObject(ByRef bteIn() As Byte, ByRef ObjOut As Object) As Boolean
-        ' Almost immediately there is a test to see if ObjOut is NOTHING.  The reason for this
-        '   when the ObjOut is suppose to be where the deserialized object is stored, is that 
-        '   I could find no way to test to see if the deserialized object and the variable to 
-        '   hold it was of the same type.  If you try to get the type of a null object, you get
-        '   only a null reference exception!  If I do not test the object type beforehand and 
-        '   there is a difference, then the InvalidCastException is thrown back in the CALLING
-        '   procedure, not here, because the cast is made when the ByRef object is cast when this
-        '   procedure returns, not earlier.  In order to prevent a cast exception in the calling
-        '   procedure that may or may not be handled, I made it so that you have to at least 
-        '   provide an initialized ObjOut when you call this - ObjOut is set to nothing after it 
-        '   is typed.
-        If bteIn Is Nothing Then Return False
-        If bteIn.Length < 1 Then Return False
-        If ObjOut Is Nothing Then Return False
-        Dim str As MemoryStream
-        Dim sf As New Binary.BinaryFormatter
-        Dim ObjTest As Object
-        Dim TType As System.Type
-        Dim OType As System.Type
-        Try
-            OType = ObjOut.GetType
-            ObjOut = Nothing
-            str = New MemoryStream(bteIn)
-            ObjTest = sf.Deserialize(str)
-            If ObjTest Is Nothing Then Return False
-            TType = ObjTest.GetType
-            If Not TType.Equals(OType) Then Return False
-            ObjOut = ObjTest
-            If ObjOut Is Nothing Then Return False
-            Return True
-        Catch exIC As InvalidCastException
-            Return False
-        Catch ex As Exception
-            Console.Write("Error: DeSerializing object: " & ex.Message)
-            Return False
-        End Try
-
     End Function
 
     <Extension()>

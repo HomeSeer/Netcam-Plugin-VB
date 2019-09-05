@@ -17,7 +17,7 @@ Public Class Taken_Picture_Trigger
         MyBase.Finalize()
     End Sub
 
-    Private ReadOnly Property Listener As IPictureTakenTriggerListener
+    Private ReadOnly Property Listener As ITriggerListener
         Get
             Return TriggerListener
         End Get
@@ -29,6 +29,12 @@ Public Class Taken_Picture_Trigger
         End Get
     End Property
 
+    Private ReadOnly Property ErrorId As String
+        Get
+            Return $"{PageId}-error"
+        End Get
+    End Property
+
     Protected Overrides Sub OnNewTrigger()
         Dim selectList As SelectListView
         Dim ListOptionNames As New List(Of String)
@@ -37,19 +43,43 @@ Public Class Taken_Picture_Trigger
         Dim refID As String
         Dim Camera As CameraData
 
-        arrCameras = Listener.GETPED()
-
-        For Each kvp As KeyValuePair(Of Integer, Object) In arrCameras
-            refID = kvp.Key
-            Camera = _plugin.GetCameraData(kvp.Value)
-            ListOptionNames.Add(Camera.Name)
-            ListOptionRefIDs.Add(refID.ToString)
-        Next
-        'selectList = New SelectListView(SelectListId1, "Cameras", ListOptionNames, ListOptionRefIDs)
-        Dim pf As PageFactory = PageFactory.CreateEventTriggerPage(PageId, "Taken a Picture").WithDropDownSelectList(SelectListId1, "Cameras", ListOptionNames, ListOptionRefIDs)
-        'ConfigPage.AddView(selectList)
-        ConfigPage = pf.Page
+        arrCameras = _plugin.GETPED()
+        Try
+            For Each kvp As KeyValuePair(Of Integer, Object) In arrCameras
+                refID = kvp.Key
+                Camera = _plugin.GetCameraData(kvp.Value)
+                ListOptionNames.Add(Camera.Name)
+                ListOptionRefIDs.Add(refID.ToString)
+            Next
+            selectList = New SelectListView(SelectListId1, "With Camera:", ListOptionNames, ListOptionRefIDs)
+            If ConfigPage.Views.Count > 0 Then ConfigPage.RemoveAllViews()
+            ConfigPage.AddView(selectList)
+        Catch
+            GenerateError("No Cameras were found.")
+        End Try
     End Sub
+
+    Public Sub GenerateError(msg As String)
+        Dim lblError As LabelView = New LabelView(ErrorId, "Error", msg)
+        Dim Views As New List(Of AbstractView)
+        'remove the old message
+        ConfigPage.RemoveViewById(ErrorId)
+
+        'start the new list with the error message
+        Views.Add(lblError)
+        'Add in the rest of the views (if there are any)
+        For Each view As AbstractView In ConfigPage.Views
+            Views.Add(view)
+        Next
+        'reset the views
+        ConfigPage.SetViews(Views)
+    End Sub
+
+    Private ReadOnly Property InputId1 As String
+        Get
+            Return $"{PageId}-input1"
+        End Get
+    End Property
 
     Public Overrides Function IsTriggerTrue(isCondition As Boolean) As Boolean
         '???? What is this for ??????
@@ -92,6 +122,11 @@ Public Class Taken_Picture_Trigger
                         Configured = False
                         Exit For
                     End If
+                Case ErrorId
+                    'check for cameras
+                    OnNewTrigger()
+                    Configured = False
+                    Exit For
             End Select
         Next
 
@@ -120,10 +155,10 @@ Public Class Taken_Picture_Trigger
     End Function
 
     Protected Overrides Function GetName() As String
-        Return "Taken a Picture"
+        Return "A Picture Was Taken"
     End Function
 
-    Interface IPictureTakenTriggerListener
+    Interface ITriggerListener
         Inherits TriggerTypeCollection.ITriggerTypeListener
 
         Function GETPED() As Dictionary(Of Integer, Object)

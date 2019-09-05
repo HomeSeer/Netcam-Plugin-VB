@@ -17,6 +17,7 @@ Public Module GeneralClasses
         Public Property Image As String
         Public Property Tab As Integer
     End Class
+
 End Module
 
 

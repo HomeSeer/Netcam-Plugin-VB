@@ -14,23 +14,14 @@ Imports HSPI_NETCAM
 
 Public Class HSPI
     Inherits AbstractPlugin
-    Implements Take_Picture_Action.IWriteLogActionListener, Taken_Picture_Trigger.IPictureTakenTriggerListener
+    Implements Take_Picture_Action.IActionListener, Taken_Picture_Trigger.ITriggerListener
 
     Protected Overrides ReadOnly Property SettingsFileName As String = "NetCamPlugin.ini"
     Public Overrides ReadOnly Property Id As String = "HSPI_NetCam"
     Public Overrides ReadOnly Property Name As String = "NetCam Plugin"
     Public Overrides ReadOnly Property SupportsConfigDevice As Boolean = True
-
-
-    'A list of pages and page titles
-    Public lstPages As SortedList(Of String, String) = New SortedList(Of String, String) From {
-            {"EditCameras", "Edit/Add Cameras"},
-            {"ViewImages", "View Images"}
-            }
-
     Public Property ExePath As String
     Public Property FilePath As String
-    Const Pagename = "Events"
 
     Public Sub New()
         ExePath = System.IO.Path.GetDirectoryName(System.AppDomain.CurrentDomain.BaseDirectory)
@@ -40,20 +31,14 @@ Public Class HSPI
     End Sub
 
     Protected Overrides Sub Initialize()
-        Dim sPageTitle As String
         'get ini setting from the plugins ini file
         LoadSettingsFromIni()
-        'check for the features pages and build the ones missing
-        '(This is not needed for releases as the pages can be included in the zip file and HomeSeer will put them in the appropriate place.)
-        CheckForFeaturePages()
-        'Loop through the list of pages and initialize.
-        For Each sPage As String In lstPages.Keys
-            sPageTitle = lstPages(sPage)
-            HomeSeerSystem.RegisterFeaturePage(Id, sPage & ".html", sPageTitle)
-            HomeSeerSystem.RegisterDeviceIncPage(Id, sPage & ".html", sPageTitle)
-        Next
+        'Only register the page needed to set up the devices for the plugin
+        HomeSeerSystem.RegisterFeaturePage(Id, "AddCameras.html", "Add Cameras")
+        HomeSeerSystem.RegisterDeviceIncPage(Id, "AddCameras.html", "Add Cameras")
         ActionTypes.AddActionType(GetType(Take_Picture_Action))
         TriggerTypes.AddTriggerType(GetType(Taken_Picture_Trigger))
+        LoadAdditionalPages(True)
         Console.WriteLine("Initialized")
     End Sub
 
@@ -62,33 +47,18 @@ Public Class HSPI
         Return True
     End Function
 
-    'Protected Function OnSettingsChange(pages As List(Of Page)) As Boolean
-    '    Console.WriteLine("OnSettingsChange")
-
-    '    For Each pageDelta In pages
-    '        Dim page = Settings(pageDelta.Id)
-
-    '        For Each settingDelta In pageDelta.Views
-    '            page.UpdateViewById(settingDelta)
-
-    '            Try
-    '                Dim newValue = settingDelta.GetStringValue()
-
-    '                If newValue Is Nothing Then
-    '                    Continue For
-    '                End If
-
-    '                HomeSeerSystem.SaveINISetting(SettingsSectionName, settingDelta.Id, newValue, SettingsFileName)
-    '            Catch exception As InvalidOperationException
-    '                Console.WriteLine(exception)
-    '            End Try
-    '        Next
-
-    '        Settings(pageDelta.Id) = page
-    '    Next
-
-    '    Return True
-    'End Function
+    Private Sub LoadAdditionalPages(Optional IsInit As Boolean = False)
+        Dim refIDs As List(Of Integer)
+        'If there are devices found in HomeSeer, then register the additional page and add the event items.
+        'Check for HomeSeer Devices
+        refIDs = HomeSeerSystem.GetRefsByInterface(Id)
+        'If the plugin is starting up ,then 1 or more devices, else only on the first device created
+        If (refIDs.Count > 0 And IsInit) Or refIDs.Count = 1 Then
+            HomeSeerSystem.RegisterFeaturePage(Id, "ViewImages.html", "View Images")
+            ActionTypes.AddActionType(GetType(Take_Picture_Action))
+            TriggerTypes.AddTriggerType(GetType(Taken_Picture_Trigger))
+        End If
+    End Sub
 
     Protected Overrides Sub BeforeReturnStatus()
         'we don't need to do anything here.
@@ -239,6 +209,7 @@ Public Class HSPI
     End Function
 
     Public Overrides Sub SetIOMulti(colSend As List(Of Devices.Controls.ControlEvent))
+        'This is called when a HomeSeer Device CAPI control is interacted with
         Dim Camera As CameraData
         Dim CC As Devices.Controls.ControlEvent
         Dim ParentRef As String
@@ -265,7 +236,7 @@ Public Class HSPI
         TrigsToCheck = HomeSeerSystem.TriggerMatches(Name, 1, -1)
         If TrigsToCheck IsNot Nothing AndAlso TrigsToCheck.Count > 0 Then
             For Each TC As TrigActInfo In TrigsToCheck
-                TpT = New Taken_Picture_Trigger(TC.UID, TC.evRef, TC.SubTANumber-1, TC.DataIn)
+                TpT = New Taken_Picture_Trigger(TC.UID, TC.evRef, TC.SubTANumber - 1, TC.DataIn)
                 'if the selected camera refID matches the refID of the camera that took the picture then fire the trigger.
                 If TpT.IsTrigger(RefID) Then
                     HomeSeerSystem.TriggerFire(Name, TC)
@@ -293,7 +264,7 @@ Public Class HSPI
         Return JUIPage.ToJsonString
     End Function
 
-    Public Function GETPED() As Dictionary(Of Integer, Object) Implements Take_Picture_Action.IWriteLogActionListener.GETPED, Taken_Picture_Trigger.IPictureTakenTriggerListener.GETPED
+    Public Function GETPED() As Dictionary(Of Integer, Object) Implements Take_Picture_Action.IActionListener.GETPED, Taken_Picture_Trigger.ITriggerListener.GETPED
         Return HomeSeerSystem.GetPropertyByInterface(Id, EProperty.PlugExtraData, True)
     End Function
 
@@ -312,8 +283,8 @@ Public Class HSPI
     Public Overrides Function PostBackProc(ByVal page As String, ByVal data As String, ByVal user As String, ByVal userRights As Integer) As String
         Dim response As String = ""
 
-        Select Case page
-            Case "editcameras.html"
+        Select Case page.ToLower
+            Case "addcameras.html"
                 Try
                     Dim Camera = JsonConvert.DeserializeObject(Of CameraData)(data)
                     If Camera.Name <> "" And Camera.URL <> "" Then
@@ -348,7 +319,7 @@ Public Class HSPI
         Dim dd As Devices.NewDeviceData
         Dim df As Devices.DeviceFactory
         'Create a device factory with a local device created inside it.
-        df = Devices.DeviceFactory.CreateDevice(_plugin.Id)
+        df = Devices.DeviceFactory.CreateDevice(Id)
         'set the name of the device.
         df.WithName(Camera.Name)
         'set the type of the device.
@@ -356,7 +327,7 @@ Public Class HSPI
 
         Dim ff As Devices.FeatureFactory
 
-        ff = Devices.FeatureFactory.CreateFeature(_plugin.Id)
+        ff = Devices.FeatureFactory.CreateFeature(Id)
 
         ff.WithName("Take Picture")
         ff.AddButton(1, "Take Picture")
@@ -372,11 +343,9 @@ Public Class HSPI
         dd = df.PrepareForHs
         'this creates the device in HomeSeer using the bundled data.
         HomeSeerSystem.CreateDevice(dd)
-    End Sub
 
-    Public Sub WriteLog(logType As ELogType, message As String) Implements Take_Picture_Action.IWriteLogActionListener.WriteLog
-        HomeSeerSystem.WriteLog(logType, message, Name)
+        'check to see if we can add the additional pages now.
+        LoadAdditionalPages()
     End Sub
-
 End Class
 
