@@ -1,8 +1,7 @@
 ﻿Imports System.IO
-Imports System.Runtime.CompilerServices
-Imports System.Text
 Imports System.Net
-Imports System.Runtime.Serialization.Formatters
+
+'Everything in this module is specific to the NetCam plugin.
 
 Module Utils
     Public Sub TakePicture(Camera As CameraData)
@@ -177,16 +176,5 @@ Module Utils
                 Exit Function
             End If
         Loop
-    End Function
-
-    <Extension()>
-    Public Sub AppendHTML(ByRef sb As StringBuilder, ByVal item As String)
-        sb.Append(item)
-        sb.Append(Environment.NewLine)
-    End Sub
-
-    <Extension()>
-    Public Function ToInt(ByRef s As String) As Integer
-        Return CInt(s)
     End Function
 End Module

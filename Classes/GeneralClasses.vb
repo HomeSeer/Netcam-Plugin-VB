@@ -1,5 +1,7 @@
 ﻿Imports Newtonsoft.Json
 
+'Everything in this module is specific to the NetCam plugin.
+
 Public Module GeneralClasses
     <JsonObject>
     Public Class CameraData

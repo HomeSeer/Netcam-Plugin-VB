@@ -1,19 +1,31 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup Label="HomeSeer Properties">
+    <!--
+    This ID must be specified and match the value set in HSPI.Id
+    It is used to ensure that the Assembly name, namespace, 
+    class ID, and HTML output directory correctly correspond to one another
+    -->
+    <PluginId>HSPI_NetCam</PluginId>
+    <!--
+    This is the root directory for the local HomeSeer installation.
+    The plugin will be automatically deployed to this directory after a successful build
+    -->
+    <HomeSeerRoot>..\Homeseer\Homeseer\</HomeSeerRoot>
+  </PropertyGroup>
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{298685C7-0348-4693-858A-918149D72F0D}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <StartupObject>HSPI_NETCAM.Program</StartupObject>
-    <RootNamespace>HSPI_NETCAM</RootNamespace>
-    <AssemblyName>HSPI_NETCAM</AssemblyName>
+    <StartupObject>Sub Main</StartupObject>
+    <RootNamespace>HSPI_$(PluginId)</RootNamespace>
+    <AssemblyName>HSPI_$(PluginId)</AssemblyName>
     <FileAlignment>512</FileAlignment>
     <MyType>Console</MyType>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -21,8 +33,8 @@
     <DebugType>full</DebugType>
     <DefineDebug>true</DefineDebug>
     <DefineTrace>true</DefineTrace>
-    <OutputPath>..\..\HomeSeer\HomeSeer\</OutputPath>
-    <DocumentationFile>HSPI_NETCAM.xml</DocumentationFile>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DocumentationFile>HomeSeerSamplePlugin_VB.xml</DocumentationFile>
     <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -32,7 +44,17 @@
     <DefineTrace>true</DefineTrace>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DocumentationFile>HSPI_NETCAM.xml</DocumentationFile>
+    <DocumentationFile>HomeSeerSamplePlugin_VB.xml</DocumentationFile>
+    <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DirectToHs|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <DefineDebug>false</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <Optimize>true</Optimize>
+    <OutputPath>$(HomeSeerRoot)</OutputPath>
+    <DocumentationFile>HomeSeerSamplePlugin_VB.xml</DocumentationFile>
     <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
   </PropertyGroup>
   <PropertyGroup>
@@ -48,14 +70,13 @@
     <OptionInfer>On</OptionInfer>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>packages\Newtonsoft.Json.12.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed">
+      <HintPath>..\packages\Newtonsoft.Json.12.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="PluginSdk, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="PluginSdk, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>..\..\HomeSeer\HomeSeer\bin\homeseer\PluginSdk.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -80,6 +101,7 @@
   <ItemGroup>
     <Compile Include="Classes\Taken_Picture_Trigger.vb" />
     <Compile Include="Classes\Take_Picture_Action.vb" />
+    <Compile Include="Extensions.vb" />
     <Compile Include="Globals.vb" />
     <Compile Include="HSPI.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
@@ -87,52 +109,34 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Application.myapp</DependentUpon>
     </Compile>
-    <Compile Include="My Project\Resources.Designer.vb">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
-    <Compile Include="My Project\Settings.Designer.vb">
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Settings.settings</DependentUpon>
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-    </Compile>
     <Compile Include="Program.vb" />
     <Compile Include="Classes\GeneralClasses.vb" />
     <Compile Include="Utils.vb" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="My Project\Resources.resx">
-      <Generator>VbMyResourcesResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.vb</LastGenOutput>
-      <CustomToolNamespace>My.Resources</CustomToolNamespace>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <None Include="My Project\Application.myapp">
       <Generator>MyApplicationCodeGenerator</Generator>
       <LastGenOutput>Application.Designer.vb</LastGenOutput>
     </None>
-    <None Include="My Project\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <CustomToolNamespace>My</CustomToolNamespace>
-      <LastGenOutput>Settings.Designer.vb</LastGenOutput>
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="App.config" />
     <None Include="packages.config" />
+    <None Include="PluginSdk.dll.config" />
+  </ItemGroup>
+  <!--
+  Include the local HTML folder and all of the HTML files it contains.
+  If you need any CSS or JS files to accompany the feature content, include it in this folder 
+  or within corresponding subdirectories (ex. html\js\ or html\css\)
+  -->
+  <ItemGroup>
+    <HtmlFiles Include="html\*">
+      <InProject>false</InProject>
+    </HtmlFiles>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="html\editcameras.html" />
+    <Content Include="html\addcameras.html" />
     <Content Include="html\viewimages.html" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
+  <Target Name="AfterBuild" Condition=" '$(Configuration)|$(Platform)' == 'DirectToHs|AnyCPU' ">
+    <Copy SourceFiles="@(HtmlFiles)" DestinationFolder="$(OutputPath)\html\$(PluginId)" />
   </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>
