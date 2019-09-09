@@ -40,7 +40,7 @@ Public Class HSPI
     ''' This SHOULD NOT include the HSPI_ prefix
     ''' </para>
     ''' </remarks>
-    Public Overrides ReadOnly Property Id As String = "NetCam"
+    Public Overrides ReadOnly Property Id As String = "HSPI_NetCam"
     ''' <inheritdoc />
     ''' <remarks>
     ''' This is the readable name for the plugin that is displayed throughout HomeSeer
@@ -70,6 +70,7 @@ Public Class HSPI
         'get ini setting from the plugins ini file
         LoadSettingsFromIni()
         'To avoid user confusion, only register the page needed to set up the devices for the plugin
+        HomeSeerSystem.RegisterFeaturePage(Id, "AddCameras.html", "Add Cameras")
         HomeSeerSystem.RegisterDeviceIncPage(Id, "AddCameras.html", "Add Cameras")
         LoadAdditionalPages(True)
         Console.WriteLine("Initialized")
@@ -84,7 +85,7 @@ Public Class HSPI
         Dim refIDs As List(Of Integer)
         'If there are devices found in HomeSeer, then register the additional page and add the event items.
         'Check for HomeSeer Devices
-        refIDs = HomeSeerSystem.GetRefsByInterface(Id)
+        refIDs = HomeSeerSystem.GetRefsByInterface(Id, True)
         'If the plugin is starting up ,then check for 1 or more devices, else only check for the first device created
         If (refIDs.Count > 0 And IsInit) Or refIDs.Count = 1 Then
             HomeSeerSystem.RegisterFeaturePage(Id, "ViewImages.html", "View Images")
