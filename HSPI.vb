@@ -40,7 +40,7 @@ Public Class HSPI
     ''' This SHOULD NOT include the HSPI_ prefix
     ''' </para>
     ''' </remarks>
-    Public Overrides ReadOnly Property Id As String = "HSPI_NetCam"
+    Public Overrides ReadOnly Property Id As String = "NetCam"
     ''' <inheritdoc />
     ''' <remarks>
     ''' This is the readable name for the plugin that is displayed throughout HomeSeer
