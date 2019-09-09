@@ -36,8 +36,11 @@ Public Class HSPI
     ''' The relative address for all of the HTML pages will end up looking like this:
     '''  ..\Homeseer\Homeseer\html\HomeSeerSamplePlugin_VB\
     ''' </para>
+    ''' <para>
+    ''' This SHOULD NOT include the HSPI_ prefix
+    ''' </para>
     ''' </remarks>
-    Public Overrides ReadOnly Property Id As String = "HSPI_NetCam"
+    Public Overrides ReadOnly Property Id As String = "NetCam"
     ''' <inheritdoc />
     ''' <remarks>
     ''' This is the readable name for the plugin that is displayed throughout HomeSeer
@@ -67,7 +70,6 @@ Public Class HSPI
         'get ini setting from the plugins ini file
         LoadSettingsFromIni()
         'To avoid user confusion, only register the page needed to set up the devices for the plugin
-        HomeSeerSystem.RegisterFeaturePage(Id, "AddCameras.html", "Add Cameras")
         HomeSeerSystem.RegisterDeviceIncPage(Id, "AddCameras.html", "Add Cameras")
         LoadAdditionalPages(True)
         Console.WriteLine("Initialized")

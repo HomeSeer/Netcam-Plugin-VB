@@ -7,7 +7,7 @@
     It is used to ensure that the Assembly name, namespace, 
     class ID, and HTML output directory correctly correspond to one another
     -->
-    <PluginId>HSPI_NetCam</PluginId>
+    <PluginId>NetCam</PluginId>
     <!--
     This is the root directory for the local HomeSeer installation.
     The plugin will be automatically deployed to this directory after a successful build
@@ -70,13 +70,17 @@
     <OptionInfer>On</OptionInfer>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed">
-      <HintPath>..\packages\Newtonsoft.Json.12.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="HSCF, Version=1.0.0.2, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\HomeSeer-PluginSDK.1.0.1\lib\net462\HSCF.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="PluginSdk, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\..\HomeSeer\HomeSeer\bin\homeseer\PluginSdk.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed">
+      <HintPath>packages\Newtonsoft.Json.12.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="PluginSdk, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\HomeSeer-PluginSDK.1.0.1\lib\net462\PluginSdk.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -114,12 +118,12 @@
     <Compile Include="Utils.vb" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="App.config" />
     <None Include="My Project\Application.myapp">
       <Generator>MyApplicationCodeGenerator</Generator>
       <LastGenOutput>Application.Designer.vb</LastGenOutput>
     </None>
     <None Include="packages.config" />
-    <None Include="PluginSdk.dll.config" />
   </ItemGroup>
   <!--
   Include the local HTML folder and all of the HTML files it contains.
