@@ -34,7 +34,7 @@ Public Class Taken_Picture_Trigger
     'Implementation of the listener interface.
     Private ReadOnly Property Listener As ITriggerListener
         Get
-            Return TriggerListener
+            Return TryCast(TriggerListener, ITriggerListener)
         End Get
     End Property
 
@@ -85,7 +85,7 @@ Public Class Taken_Picture_Trigger
         Dim Configured As Boolean = True
         Dim selectList As SelectListView
 
-        If Listener.HasDevices Then
+        If _plugin.HasDevices Then
             For Each view As AbstractView In ConfigPage.Views
                 Select Case view.Id
                     Case SelectListId1
@@ -125,7 +125,7 @@ Public Class Taken_Picture_Trigger
         Try
             For Each kvp As KeyValuePair(Of Integer, Object) In arrCameras
                 refID = kvp.Key
-                Camera = Listener.GetCameraData(kvp.Value)
+                Camera = _plugin.GetCameraData(kvp.Value)
                 ListOptionNames.Add(Camera.Name)
                 ListOptionRefIDs.Add(refID.ToString)
             Next
@@ -161,18 +161,14 @@ Public Class Taken_Picture_Trigger
     End Function
 
     Public Sub GenerateError(msg As String)
+        'this will add a label view to the top of the page canvas with an error message
         Dim lblError As LabelView = New LabelView(ErrorId, "Error", msg)
         Dim Views As New List(Of AbstractView)
-        'remove the old message
-        Try
-            ConfigPage.RemoveViewById(ErrorId)
-        Catch
-        End Try
         'start the new list with the error message
-        Views.Add(lblError)
+        If Not ConfigPage.ViewIds.Contains(ErrorId) Then Views.Add(lblError)
         'Add in the rest of the views (if there are any)
         For Each view As AbstractView In ConfigPage.Views
-            Views.Add(view)
+            If view.Id <> ErrorId Then Views.Add(view)
         Next
         'reset the views
         ConfigPage.SetViews(Views)

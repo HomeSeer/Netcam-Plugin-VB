@@ -51,7 +51,7 @@ Public Class Take_Picture_Action
     'Implementation of the listener interface.
     Private ReadOnly Property Listener As IActionListener
         Get
-            Return ActionListener '(this comes from the abstractPlugin class)
+            Return TryCast(ActionListener, IActionListener)
         End Get
     End Property
 
@@ -290,20 +290,14 @@ Public Class Take_Picture_Action
         'this will add a label view to the top of the page canvas with an error message
         Dim lblError As LabelView = New LabelView(ErrorId, "Error", msg)
         Dim Views As New List(Of AbstractView)
-        'remove the old message
-        Try
-            ConfigPage.RemoveViewById(ErrorId)
-        Catch
-        End Try
         'start the new list with the error message
-        Views.Add(lblError)
+        If Not ConfigPage.ViewIds.Contains(ErrorId) Then Views.Add(lblError)
         'Add in the rest of the views (if there are any)
         For Each view As AbstractView In ConfigPage.Views
-            Views.Add(view)
+            If view.Id <> ErrorId Then Views.Add(view)
         Next
         'reset the views
         ConfigPage.SetViews(Views)
-
     End Sub
 End Class
 
