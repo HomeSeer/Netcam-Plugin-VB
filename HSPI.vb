@@ -70,7 +70,7 @@ Public Class HSPI
         'get ini setting from the plugins ini file
         LoadSettingsFromIni()
         'To avoid user confusion, only register the page needed to set up the devices for the plugin
-        HomeSeerSystem.RegisterFeaturePage(Id, "AddCameras.html", "Add Cameras")
+        'This will register the page as a feature page as well as include it on the 'Device Add Menu' list.
         HomeSeerSystem.RegisterDeviceIncPage(Id, "AddCameras.html", "Add Cameras")
         LoadAdditionalPages(True)
         Console.WriteLine("Initialized")
@@ -285,8 +285,7 @@ Public Class HSPI
         If TrigsToCheck IsNot Nothing AndAlso TrigsToCheck.Count > 0 Then
             For Each TC As TrigActInfo In TrigsToCheck
                 'load the trigger data into the plugin's trigger class
-                TpT = New Taken_Picture_Trigger(TC.UID, TC.evRef, TC.SubTANumber - 1, TC.DataIn)
-                TpT.InflateTriggerFromData()
+                TpT = New Taken_Picture_Trigger(TC.UID, TC.evRef, TC.SubTANumber - 1, TC.DataIn, Me, LogDebug)
                 'if the selected camera refID matches the refID of the camera that took the picture then fire the trigger.
                 If TpT.IsTrigger(RefID) Then
                     HomeSeerSystem.TriggerFire(Name, TC)

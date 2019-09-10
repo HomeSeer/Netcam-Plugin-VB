@@ -9,8 +9,8 @@ Public Class Taken_Picture_Trigger
         MyBase.New
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal eventRef As Integer, ByVal selectedSubTriggerIndex As Integer, ByVal dataIn As Byte())
-        MyBase.New(id, eventRef, selectedSubTriggerIndex, dataIn)
+    Public Sub New(ByVal id As Integer, ByVal eventRef As Integer, ByVal selectedSubTriggerIndex As Integer, ByVal dataIn As Byte(), oListener As TriggerTypeCollection.ITriggerTypeListener, Optional logDebug As Boolean = False)
+        MyBase.New(id, eventRef, selectedSubTriggerIndex, dataIn, oListener, logDebug)
     End Sub
 
     Protected Overrides Sub Finalize()
@@ -55,8 +55,8 @@ Public Class Taken_Picture_Trigger
         Return False
     End Function
 
+    'this is used if you have conditions associated with your trigger.
     Public Overrides Function IsTriggerTrue(isCondition As Boolean) As Boolean
-        '???? What is this for ??????
         Return True
     End Function
 

@@ -12,8 +12,8 @@ Public Class Take_Picture_Action
         MyBase.New
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal eventRef As Integer, ByVal dataIn As Byte())
-        MyBase.New(id, eventRef, dataIn)
+    Public Sub New(ByVal id As Integer, ByVal eventRef As Integer, ByVal dataIn As Byte(), oListener As ActionTypeCollection.IActionTypeListener, Optional logDebug As Boolean = False)
+        MyBase.New(id, eventRef, dataIn, oListener, logDebug)
     End Sub
 
     Protected Overrides Sub Finalize()
