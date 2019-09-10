@@ -15,8 +15,8 @@ Imports HomeSeer.PluginSdk.Devices.Identification
 ''' </summary>
 ''' <remarks>
 ''' This class is accessed by HomeSeer and requires that its name be "HSPI" and be located in a namespace
-'''  that corresponds to the name of the executable. For this plugin, "HomeSeerSamplePlugin_VB" the executable
-'''  file is "HSPI_HomeSeerSamplePlugin_VB.exe" and this class is HSPI_HomeSeerSamplePlugin_VB.HSPI
+'''  that corresponds to the name of the executable. For this plugin, "NetCam" the executable
+'''  file is "HSPI_NetCam.exe" and this class is HSPI_NetCam.HSPI
 ''' <para>
 ''' If HomeSeer is unable to find this class, the plugin will not start.
 ''' </para>
@@ -34,7 +34,7 @@ Public Class HSPI
     ''' </para>
     ''' <para>
     ''' The relative address for all of the HTML pages will end up looking like this:
-    '''  ..\Homeseer\Homeseer\html\HomeSeerSamplePlugin_VB\
+    '''  ..\Homeseer\Homeseer\html\NetCam\
     ''' </para>
     ''' <para>
     ''' This SHOULD NOT include the HSPI_ prefix
@@ -286,6 +286,7 @@ Public Class HSPI
             For Each TC As TrigActInfo In TrigsToCheck
                 'load the trigger data into the plugin's trigger class
                 TpT = New Taken_Picture_Trigger(TC.UID, TC.evRef, TC.SubTANumber - 1, TC.DataIn)
+                TpT.InflateTriggerFromData()
                 'if the selected camera refID matches the refID of the camera that took the picture then fire the trigger.
                 If TpT.IsTrigger(RefID) Then
                     HomeSeerSystem.TriggerFire(Name, TC)
@@ -399,7 +400,7 @@ Public Class HSPI
         'set the type of the device.
         df.AsType(EDeviceType.Generic, 0)
 
-        'this is the what you use to create feature(child) devices for you device group
+        'this is the what you use to create feature(child) devices for your device group
         Dim ff As Devices.FeatureFactory
 
         'create a new feature data holder.

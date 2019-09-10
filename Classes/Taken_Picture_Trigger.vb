@@ -85,7 +85,7 @@ Public Class Taken_Picture_Trigger
         Dim Configured As Boolean = True
         Dim selectList As SelectListView
 
-        If _plugin.HasDevices Then
+        If Listener.HasDevices Then
             For Each view As AbstractView In ConfigPage.Views
                 Select Case view.Id
                     Case SelectListId1
@@ -125,7 +125,7 @@ Public Class Taken_Picture_Trigger
         Try
             For Each kvp As KeyValuePair(Of Integer, Object) In arrCameras
                 refID = kvp.Key
-                Camera = _plugin.GetCameraData(kvp.Value)
+                Camera = Listener.GetCameraData(kvp.Value)
                 ListOptionNames.Add(Camera.Name)
                 ListOptionRefIDs.Add(refID.ToString)
             Next
