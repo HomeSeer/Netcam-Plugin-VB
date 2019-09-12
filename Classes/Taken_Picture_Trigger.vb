@@ -1,6 +1,7 @@
 ﻿Imports HomeSeer.Jui.Views
-Imports HomeSeer.Jui.Types
 Imports HomeSeer.PluginSdk.Events
+Imports HomeSeer.PluginSdk.Devices
+
 
 Public Class Taken_Picture_Trigger
     Inherits AbstractTriggerType
@@ -42,6 +43,7 @@ Public Class Taken_Picture_Trigger
     Interface ITriggerListener
         Inherits TriggerTypeCollection.ITriggerTypeListener
         Function GetCameraData(refID As String) As CameraData
+        Function GetCameraDataByPED(PED As PlugExtraData) As CameraData
         Function GETPED() As Dictionary(Of Integer, Object)
         Function HasDevices() As Boolean
     End Interface
@@ -125,14 +127,16 @@ Public Class Taken_Picture_Trigger
         Try
             For Each kvp As KeyValuePair(Of Integer, Object) In arrCameras
                 refID = kvp.Key
-                Camera = Listener.GetCameraData(kvp.Value)
+                Camera = Listener.GetCameraDataByPED(kvp.Value)
                 ListOptionNames.Add(Camera.Name)
                 ListOptionRefIDs.Add(refID.ToString)
             Next
             selectList = New SelectListView(SelectListId1, "With Camera:", ListOptionNames, ListOptionRefIDs)
             If ConfigPage.Views.Count > 0 Then ConfigPage.RemoveAllViews()
             ConfigPage.AddView(selectList)
-        Catch
+        Catch ex As Exception
+            Dim msg As String
+            msg = ex.Message 
             GenerateError("No Cameras were found.")
         End Try
     End Sub

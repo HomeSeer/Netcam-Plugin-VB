@@ -127,7 +127,8 @@ Public Class HSPI
                 'this builds the tabs on the viewImages.html page.
                 If arrCameras.Count > 0 Then
                     sb.AppendHTML("<ul class=""nav nav-tabs hs-tabs"" role=""tablist"">")
-                    For Each Camera In arrCameras.Values
+                    For Each PED As PlugExtraData In arrCameras.Values
+                        Camera = GetCameraDataByPED(PED)
                         If i = ActiveTab Then
                             Active = " active"
                             AriaSelected = "true"
@@ -146,7 +147,8 @@ Public Class HSPI
             Case "cameraimages"
                 'this builds the images for each tab on the viewImages.html page.
                 If arrCameras.Count > 0 Then
-                    For Each Camera In arrCameras.Values
+                    For Each PED As PlugExtraData In arrCameras.Values
+                        Camera = GetCameraDataByPED(PED)
                         If i = ActiveTab Then Active = " active show"
                         arrImages = GetCameraImages(Camera.Name)
                         sb.AppendHTML("<div Class=""tab-pane fade" & Active & """ role=""tabpanel"" aria-labelledby=""settings-page" & i & ".tab"" id=""settings-page" & i & """>")
@@ -172,13 +174,13 @@ Public Class HSPI
         Try
             'the camerdata class is kept in the PED of a device.
             PED = HomeSeerSystem.GetPropertyByRef(refID, EProperty.PlugExtraData)
-            Camera = GetCameraData(PED)
+            Camera = GetCameraDataByPED(PED)
         Catch
         End Try
         Return Camera
     End Function
 
-    Function GetCameraData(PED As Devices.PlugExtraData) As CameraData
+    Function GetCameraDataByPED(PED As PlugExtraData) As CameraData Implements Take_Picture_Action.IActionListener.GetCameraDataByPED, Taken_Picture_Trigger.ITriggerListener.GetCameraDataByPED
         Dim sJSON As String
         Dim Camera As CameraData
         'the camerdata class is kept as a JSON string in the PED of a device.

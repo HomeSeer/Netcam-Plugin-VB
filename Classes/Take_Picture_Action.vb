@@ -2,6 +2,7 @@
 Imports HomeSeer.Jui.Types
 Imports HomeSeer.PluginSdk.Events
 Imports HomeSeer.PluginSdk
+Imports HomeSeer.PluginSdk.Devices
 
 'Because the class is not being instantiated when the functions are being called,
 'you must have properties in an expanded form to be read correctly.
@@ -59,6 +60,7 @@ Public Class Take_Picture_Action
     Interface IActionListener
         Inherits ActionTypeCollection.IActionTypeListener
         Function GetCameraData(refID As String) As CameraData
+        Function GetCameraDataByPED(PED As PlugExtraData) As CameraData
         Function GETPED() As Dictionary(Of Integer, Object)
         Function HasDevices() As Boolean
     End Interface
@@ -201,7 +203,7 @@ Public Class Take_Picture_Action
         Try
             For Each kvp As KeyValuePair(Of Integer, Object) In arrCameras
                 refID = kvp.Key
-                Camera = Listener.GetCameraData(kvp.Value)
+                Camera = Listener.GetCameraDataByPED(kvp.Value)
                 ListOptionNames.Add(Camera.Name)
                 ListOptionRefIDs.Add(refID.ToString)
             Next

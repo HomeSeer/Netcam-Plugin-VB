@@ -10,7 +10,7 @@ Imports System.Runtime.InteropServices
 
 <Assembly: AssemblyTitle("NetCam Plugin")>
 <Assembly: AssemblyDescription("")>
-<Assembly: AssemblyCompany("Microsoft")>
+<Assembly: AssemblyCompany("HomeSeer Technologies")>
 <Assembly: AssemblyProduct("NetCam Plugin")>
 <Assembly: AssemblyCopyright("Copyright © HomeSeer 2019")>
 <Assembly: AssemblyTrademark("")>
