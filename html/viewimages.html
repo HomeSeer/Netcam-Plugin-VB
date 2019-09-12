@@ -17,7 +17,7 @@
     {{includefile 'header.html'}}
     {{includefile 'navbar.html'}}
 
-    <div class="container" id="main_content">        
+    <div class="container" id="main_content">
         {{plugin_function 'NetCam' 'PagePreLoad' ['cameratabs']}}
     </div>
     <div class="tab-content container">
@@ -26,15 +26,23 @@
 
     {{includefile 'bootstrap/js/page_common.js'}}
     <script type="text/JavaScript">
-        function PostBackFunction(e) {
-            alert('start');
-       
-    }
+        function PostBackFunction(e, t) {
+            var internalData = { Image: e, Tab: t };
+            var jsonData = JSON.stringify(internalData);
+            $.ajax({
+                type: "POST",
+                async: "true",
+                url: '/NetCam/viewimages.html',
+                cache: false,
+                data: jsonData,
+                success: function (response) {
 
-    function finish() {
-        var devicesPage = window.location.origin + "/devices.html";
-        window.location.assign(devicesPage);
-    }
-</script>
+                    window.location.reload(true);
+
+                }
+            });
+
+        }
+    </script>
 </body>
 </html>

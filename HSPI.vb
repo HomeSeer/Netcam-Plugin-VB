@@ -119,7 +119,6 @@ Public Class HSPI
         'This is specific to the viewimages.html page
         If gImageData IsNot Nothing Then
             ActiveTab = gImageData.Tab
-            gImageData = Nothing
         End If
 
         Select Case FunctionID.ToLower
@@ -145,6 +144,10 @@ Public Class HSPI
                     sb.AppendHTML("No Cameras Found")
                 End If
             Case "cameraimages"
+                If gImageData IsNot Nothing Then
+                    ActiveTab = gImageData.Tab
+                    gImageData = Nothing
+                End If
                 'this builds the images for each tab on the viewImages.html page.
                 If arrCameras.Count > 0 Then
                     For Each PED As PlugExtraData In arrCameras.Values
@@ -154,7 +157,7 @@ Public Class HSPI
                         sb.AppendHTML("<div Class=""tab-pane fade" & Active & """ role=""tabpanel"" aria-labelledby=""settings-page" & i & ".tab"" id=""settings-page" & i & """>")
                         sb.AppendHTML("    <div Class=""container"">")
                         For Each sImage As String In arrImages
-                            sb.AppendHTML("<img id=""image-" & iImage & """ src=""/" & Id & "/images/" & sImage & """ height=""100"" width=""200"" /><button class=""waves-effect waves-dark btn btn-sm btn-primary m-0 mt-4"" onclick=""PostBackFunction('image-" & iImage & "','" & i & "');"">Delete Image</button>")
+                            sb.AppendHTML("<img id=""image-" & iImage & """ src=""/" & Id & "/images/" & sImage & """ height=""100"" width=""200"" /><button class=""waves-effect waves-dark btn btn-sm btn-primary m-0 mt-4"" onclick=""PostBackFunction('" & sImage & "','" & i & "');"">Delete Image</button>")
                             iImage += 1
                         Next
                         sb.AppendHTML("    </div>")
