@@ -407,11 +407,6 @@ Public Class HSPI
     Sub Add_HSDevice(ByVal Camera As CameraData)
         Dim dd As Devices.NewDeviceData
         Dim df As Devices.DeviceFactory
-        Dim refID As Integer
-        Dim evID As Integer
-        Dim dv As HsDevice = Nothing
-        Dim dvFeature As HsFeature = Nothing
-        Dim ce As Controls.ControlEvent = Nothing
 
         'Use the device factory to create an area to hold the device data that is used to create the device
         df = Devices.DeviceFactory.CreateDevice(Id)
@@ -445,11 +440,7 @@ Public Class HSPI
         dd = df.PrepareForHs
 
         'this creates the device in HomeSeer using the bundled data.
-        refID = HomeSeerSystem.CreateDevice(dd)
-
-        'we're creating an event that can be triggered to update the device status after a set amount of time.
-        dv = HomeSeerSystem.GetDeviceWithFeaturesByRef(refID)
-        dvFeature = dv.Features(0)
+        HomeSeerSystem.CreateDevice(dd)
 
         'check to see if we need to add additional pages now.
         LoadAdditionalPages()
