@@ -1,4 +1,6 @@
 ﻿Imports Newtonsoft.Json
+Imports System.ComponentModel
+Imports System.Runtime.CompilerServices
 
 'Everything in this module is specific to the NetCam plugin.
 
@@ -19,7 +21,6 @@ Public Module GeneralClasses
         Public Property Image As String
         Public Property Tab As Integer
     End Class
-
 End Module
 
 

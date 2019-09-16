@@ -53,12 +53,14 @@ Public Class HSPI
     'these are used to set the path for camera images
     Public Property ExePath As String
     Public Property FilePath As String
+    Public Property htmlPath As String
     'this is used to hold image data between page requests
     Public gImageData As ImageData = Nothing
 
     Public Sub New()
         ExePath = System.IO.Path.GetDirectoryName(System.AppDomain.CurrentDomain.BaseDirectory)
         FilePath = FixPath(ExePath & "/html/" & Id & "/images/")
+        htmlPath = "./" & Id
         'this will output debug information from the pluinSDK to the console window.
         LogDebug = True
     End Sub
@@ -157,7 +159,7 @@ Public Class HSPI
                         sb.AppendHTML("<div Class=""tab-pane fade" & Active & """ role=""tabpanel"" aria-labelledby=""settings-page" & i & ".tab"" id=""settings-page" & i & """>")
                         sb.AppendHTML("    <div Class=""container"">")
                         For Each sImage As String In arrImages
-                            sb.AppendHTML("<img id=""image-" & iImage & """ src=""/" & Id & "/images/" & sImage & """ height=""100"" width=""200"" /><button class=""waves-effect waves-dark btn btn-sm btn-primary m-0 mt-4"" onclick=""PostBackFunction('" & sImage & "','" & i & "');"">Delete Image</button>")
+                            sb.AppendHTML("<img id=""image-" & iImage & """ src=""/" & Id & "/images/" & sImage & """ height=""100"" width=""200"" /><i class=""fas fa-lg fa-point fa-trash-alt mr-1 ml-1 mb-2"" data-toggle=""modal"" data-target=""#delete_group"" data-tooltip='delete' data-placement='top' title='Delete Image' onclick=""PostBackFunction('" & sImage & "','" & i & "');""></i>")
                             iImage += 1
                         Next
                         sb.AppendHTML("    </div>")
@@ -240,7 +242,6 @@ Public Class HSPI
                 End Select
             End If
         Next
-
         Return Camera
     End Function
 
@@ -263,6 +264,7 @@ Public Class HSPI
         Dim CC As Devices.Controls.ControlEvent
         Dim ParentRef As String
         Dim dv As HsDevice
+        Dim ed As EventData = Nothing
 
         For Each CC In colSend
             'we need the root device ref of the group, so find out if we already have it.
@@ -276,8 +278,16 @@ Public Class HSPI
             End If
             Camera = GetCameraData(ParentRef)
             TakePicture(Camera)
+            HomeSeerSystem.ControlFeatureByValue(CC.TargetRef, 1)
             'See if we need to fire any of our triggers on the events page
             CheckTriggers(ParentRef)
+
+            Select Case dv.Value
+                Case 0
+                    HomeSeerSystem.ControlFeatureByValue(CC.TargetRef, 1)
+                Case 1
+                    HomeSeerSystem.ControlFeatureByValue(CC.TargetRef, 0)
+            End Select
         Next
     End Sub
 
@@ -397,6 +407,12 @@ Public Class HSPI
     Sub Add_HSDevice(ByVal Camera As CameraData)
         Dim dd As Devices.NewDeviceData
         Dim df As Devices.DeviceFactory
+        Dim refID As Integer
+        Dim evID As Integer
+        Dim dv As HsDevice = Nothing
+        Dim dvFeature As HsFeature = Nothing
+        Dim ce As Controls.ControlEvent = Nothing
+
         'Use the device factory to create an area to hold the device data that is used to create the device
         df = Devices.DeviceFactory.CreateDevice(Id)
         'set the name of the device.
@@ -413,6 +429,9 @@ Public Class HSPI
         'add the properties for your feature.
         ff.WithName("Take Picture")
         ff.AddButton(1, "Take Picture")
+        'we're gonna toggle the value to update the datechanged on the device
+        ff.AddGraphicForValue(htmlPath & "/camera-ready.png", 0)
+        ff.AddGraphicForValue(htmlPath & "/camera-ready.png", 1)
 
         'Add the feature data to the device data in the device factory
         df.WithFeature(ff)
@@ -424,8 +443,13 @@ Public Class HSPI
 
         'this bundles all the needed data from the device to send to HomeSeer.
         dd = df.PrepareForHs
+
         'this creates the device in HomeSeer using the bundled data.
-        HomeSeerSystem.CreateDevice(dd)
+        refID = HomeSeerSystem.CreateDevice(dd)
+
+        'we're creating an event that can be triggered to update the device status after a set amount of time.
+        dv = HomeSeerSystem.GetDeviceWithFeaturesByRef(refID)
+        dvFeature = dv.Features(0)
 
         'check to see if we need to add additional pages now.
         LoadAdditionalPages()
