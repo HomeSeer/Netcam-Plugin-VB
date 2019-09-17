@@ -3,3 +3,4 @@ HSPI_NetCam.exe.config,.,0
 ReadMe.txt,.\html\NetCam\images,0
 addcameras.html,.\html\NetCam,0
 viewimages.html,.\html\NetCam,0
+camera-ready.png,.\html\NetCam,0

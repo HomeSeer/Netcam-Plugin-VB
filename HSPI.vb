@@ -414,6 +414,8 @@ Public Class HSPI
         df.WithName(Camera.Name)
         'set the type of the device.
         df.AsType(EDeviceType.Generic, 0)
+        df.WithLocation("Cameras")
+        df.WithLocation2(Id)
 
         'this is the what you use to create feature(child) devices for your device group
         Dim ff As Devices.FeatureFactory
