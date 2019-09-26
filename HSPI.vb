@@ -278,16 +278,16 @@ Public Class HSPI
             End If
             Camera = GetCameraData(ParentRef)
             TakePicture(Camera)
-            HomeSeerSystem.ControlFeatureByValue(CC.TargetRef, 1)
-            'See if we need to fire any of our triggers on the events page
-            CheckTriggers(ParentRef)
 
             Select Case dv.Value
                 Case 0
-                    HomeSeerSystem.ControlFeatureByValue(CC.TargetRef, 1)
+                    HomeSeerSystem.UpdateFeatureValueByRef(CC.TargetRef, 1)
                 Case 1
-                    HomeSeerSystem.ControlFeatureByValue(CC.TargetRef, 0)
+                    HomeSeerSystem.UpdateFeatureValueByRef(CC.TargetRef, 0)
             End Select
+
+            'See if we need to fire any of our triggers on the events page
+            CheckTriggers(ParentRef)
         Next
     End Sub
 

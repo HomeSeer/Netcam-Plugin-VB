@@ -29,16 +29,16 @@ Public Class Take_Picture_Action
     End Property
 
     'Image count
-    Private ReadOnly Property InputId1 As String
+    Private ReadOnly Property SelectListId2 As String
         Get
-            Return $"{PageId}-input1"
+            Return $"{PageId}-selectlist2"
         End Get
     End Property
 
     'Interval value
-    Private ReadOnly Property InputId2 As String
+    Private ReadOnly Property SelectListId3 As String
         Get
-            Return $"{PageId}-input2"
+            Return $"{PageId}-selectlist3"
         End Get
     End Property
 
@@ -82,7 +82,6 @@ Public Class Take_Picture_Action
         Dim Images As Integer = 1
         Dim Interval As Single = 0.01
         Dim selectList As SelectListView
-        Dim oInputView As InputView
 
         'Loop through the view items placed on the page canvas.
         For Each view As AbstractView In ConfigPage.Views
@@ -91,14 +90,14 @@ Public Class Take_Picture_Action
                     'get the item selected
                     selectList = TryCast(view, SelectListView)
                     CamRef = selectList.OptionKeys(selectList.Selection)
-                Case InputId1
+                Case SelectListId2
                     'get the image count
-                    oInputView = TryCast(view, InputView)
-                    Images = oInputView.Value
-                Case InputId2
+                    selectList = TryCast(view, SelectListView)
+                    Images = selectList.OptionKeys(selectList.Selection)
+                Case SelectListId3
                     'get the interval
-                    oInputView = TryCast(view, InputView)
-                    Interval = oInputView.Value
+                    selectList = TryCast(view, SelectListView)
+                    Interval = selectList.OptionKeys(selectList.Selection)
             End Select
         Next
         'use the values from the action to actuate the process of taking a picture
@@ -124,8 +123,7 @@ Public Class Take_Picture_Action
     Public Overrides Function IsFullyConfigured() As Boolean
         Dim Configured As Boolean = True
         Dim selectList As SelectListView
-        Dim oInputView1 As InputView
-        Dim oInputView2 As InputView
+        Dim selectList2 As SelectListView
         'Make sure all the cameras weren't deleted somewhere during the process
         If Listener.HasDevices Then
             'check all the views in the action
@@ -138,34 +136,30 @@ Public Class Take_Picture_Action
                             Configured = False
                             Exit For
                         End If
-                    Case InputId1
-                        oInputView1 = TryCast(view, InputView)
+                    Case SelectListId2
+                        selectList = TryCast(view, SelectListView)
                         'no number of images? return false!!
-                        If oInputView1?.Value Is Nothing OrElse oInputView1?.Value.Length = 0 Then
+                        If selectList.GetSelectedOption = "" Then
                             Configured = False
                             Exit For
-                            'they put in less than 1? return false!!!
-                        ElseIf oInputView1?.Value < 1 Then
+                            'no selection? return false!!!
+                        ElseIf selectList.GetSelectedOption = "1" And ConfigPage.Views.Count = 3 Then
                             Configured = False
                             Exit For
                         End If
-                    Case InputId2
-                        oInputView1 = TryCast(ConfigPage.GetViewById(InputId1), InputView)
-                        oInputView2 = TryCast(view, InputView)
+                    Case SelectListId3
+                        selectList = TryCast(ConfigPage.GetViewById(SelectListId2), SelectListView)
+                        selectList2 = TryCast(view, SelectListView)
                         'no number of images? return false!!
-                        If oInputView1?.Value Is Nothing OrElse oInputView1?.Value.Length = 0 Then
+                        If selectList.GetSelectedOption = "" Then
                             Configured = False
                             Exit For
                             'number of images less than 2? return false!!!
-                        ElseIf oInputView1?.Value < 2 Then
+                        ElseIf selectList.GetSelectedOption < 2 Then
                             Configured = False
                             Exit For
                             'no interval for an image count greater than 1? return false!!!!
-                        ElseIf oInputView2?.Value Is Nothing OrElse oInputView2?.Value.Length = 0 Then
-                            Configured = False
-                            Exit For
-                            'they put in a number less than 1? return false!!!!!
-                        ElseIf oInputView2?.Value < 1 Then
+                        ElseIf selectList2.GetSelectedOption = "" Then
                             Configured = False
                             Exit For
                         End If
@@ -192,11 +186,11 @@ Public Class Take_Picture_Action
         Dim selectList As SelectListView
         Dim ListOptionNames As New List(Of String)
         Dim ListOptionRefIDs As New List(Of String)
-        Dim oInputView As InputView
         Dim arrCameras As Dictionary(Of Integer, Object)
         Dim refID As String
         Dim Camera As CameraData
-
+        Dim arrValues As New List(Of String)
+        Dim arrKeys As New List(Of String)
         'get the camerdata from all the devices (top level)
         arrCameras = Listener.GETPED()
 
@@ -210,9 +204,16 @@ Public Class Take_Picture_Action
             selectList = New SelectListView(SelectListId1, "With Camera:", ListOptionNames, ListOptionRefIDs)
             If ConfigPage.Views.Count > 0 Then ConfigPage.RemoveAllViews()
             ConfigPage.AddView(selectList)
-            oInputView = New InputView(InputId1, "Number of Pictures")
-            ConfigPage.AddView(oInputView)
-        Catch
+            'Set a list to select the number of pictures to be taken.
+            For i As Integer = 1 To 30
+                arrValues.Add(i.ToString)
+                arrKeys.Add(i.ToString)
+            Next
+            selectList = New SelectListView(SelectListId2, "# Pics To Take:", arrValues, arrKeys)
+            ConfigPage.AddView(selectList)
+        Catch ex As Exception
+            Dim msg As String
+            msg = ex.Message
             'add a new error label to the page canvas
             GenerateError("No Cameras were found.")
         End Try
@@ -222,26 +223,32 @@ Public Class Take_Picture_Action
     Protected Overrides Function OnConfigItemUpdate(configViewChange As AbstractView) As Boolean
         'See if the view is for the image count input box
         Select Case configViewChange.Id
-            Case InputId1
+            Case SelectListId2
                 'Make a list of our current views.
                 Dim Views As New Dictionary(Of String, AbstractView)
                 For Each view As AbstractView In ConfigPage.Views
                     Views.Add(view.Id, view)
                 Next
-                Dim InputID1Value As String
-                InputID1Value = configViewChange.GetStringValue
-                If IsNumeric(InputID1Value) AndAlso InputID1Value > 1 Then
+                Dim SelectListId2Value As String
+                SelectListId2Value = configViewChange.GetStringValue
+                If SelectListId2Value > 1 Then
                     'check to see if we already have our interval input box.
                     'if we don't then add it.
-                    If Not Views.Keys.Contains(InputId2) Then
-                        Dim oInputView = New InputView(InputId2, "Wait Time Between Pictures (In Seconds)")
-                        ConfigPage.AddView(oInputView)
+                    If Not Views.Keys.Contains(SelectListId3) Then
+                        Dim arrValues As New List(Of String)
+                        Dim arrKeys As New List(Of String)
+                        For i As Integer = 1 To 15
+                            arrValues.Add(i.ToString)
+                            arrKeys.Add(i.ToString)
+                        Next
+                        Dim selectList = New SelectListView(SelectListId3, "Seconds Between Pics:", arrValues, arrKeys)
+                        ConfigPage.AddView(selectList)
                     End If
                 Else
                     'check if the intervl input box is in our list of views
-                    If Views.Keys.Contains(InputId2) Then
+                    If Views.Keys.Contains(SelectListId3) Then
                         'remove the interval input box.
-                        Views.Remove(InputId2)
+                        Views.Remove(SelectListId3)
                         'reset the views
                         ConfigPage.SetViews(Views.Values)
                     End If
@@ -258,7 +265,6 @@ Public Class Take_Picture_Action
         Dim Interval As String = ""
         Dim ClosingText As String = ""
         Dim selectList As SelectListView
-        Dim oInputView As InputView
 
         'Go through the list of views and get the values
         For Each view As AbstractView In ConfigPage.Views
@@ -266,12 +272,12 @@ Public Class Take_Picture_Action
                 Case SelectListId1
                     selectList = TryCast(view, SelectListView)
                     Camera = selectList.GetSelectedOption
-                Case InputId1
-                    oInputView = TryCast(view, InputView)
-                    PictureCount = oInputView.GetStringValue
-                Case InputId2
-                    oInputView = TryCast(view, InputView)
-                    Interval = oInputView.GetStringValue
+                Case SelectListId2
+                    selectList = TryCast(view, SelectListView)
+                    PictureCount = selectList.GetSelectedOption
+                Case SelectListId3
+                    selectList = TryCast(view, SelectListView)
+                    Interval = selectList.GetSelectedOption
             End Select
         Next
         'Figure out how it should be phrased.
