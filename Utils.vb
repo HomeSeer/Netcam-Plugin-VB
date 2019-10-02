@@ -34,23 +34,30 @@ Module Utils
     End Sub
 
     Sub CheckPicList(Camera As CameraData)
+        Dim file As FileInfo
         Dim filename As String
         Dim arrPics As New Collection
         Dim PicName As String
         Dim DeleteCount As Integer
         Dim i As Integer = 0
+        Dim MaxCount As Integer
 
-        filename = Dir(_plugin.FilePath & "*.jpg")
+        Dim files As FileInfo() = New DirectoryInfo(_plugin.FilePath).GetFiles()
+        Dim upperBound As Integer = files.GetUpperBound(0)
+        Dim dates(upperBound) As Date
 
-        Do Until filename = ""
-            arrPics.Add(filename)
-            filename = Dir()
-        Loop
+        For index As Integer = 0 To upperBound Step 1
+            dates(index) = files(index).CreationTime
+        Next
 
-        If arrPics.Count > Camera.MaxCount Then
-            DeleteCount = arrPics.Count - Camera.MaxCount
-            For Each PicName In arrPics
-                System.IO.File.Delete(_plugin.FilePath & PicName)
+        Array.Sort(dates, files)
+
+        MaxCount = _plugin.GetMaxCount
+
+        If files.Count > MaxCount Then
+            DeleteCount = files.Count - MaxCount
+            For Each file In files
+                System.IO.File.Delete(file.FullName)
                 i += 1
                 If i >= DeleteCount Then Exit For
             Next

@@ -21,6 +21,11 @@ Public Module GeneralClasses
         Public Property Image As String
         Public Property Tab As Integer
     End Class
+
+    Public Class HSTimer
+        Inherits Timers.Timer
+        Public Property RefIDs As New SortedList(Of String, DateTime)
+    End Class
 End Module
 
 

@@ -62,6 +62,7 @@ Public Class Take_Picture_Action
         Function GetCameraData(refID As String) As CameraData
         Function GetCameraDataByPED(PED As PlugExtraData) As CameraData
         Function GETPED() As Dictionary(Of Integer, Object)
+        Sub TriggerCamera(refID As String)
         Function HasDevices() As Boolean
     End Interface
 
@@ -106,7 +107,7 @@ Public Class Take_Picture_Action
             If Camera IsNot Nothing Then
                 Interval = Interval * 1000
                 For i = 1 To Images
-                    TakePicture(Camera)
+                    Listener.TriggerCamera(CamRef)
                     Threading.Thread.Sleep(Interval)
                 Next
             Else

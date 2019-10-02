@@ -46,9 +46,10 @@ Public Class HSPI
     ''' This is the readable name for the plugin that is displayed throughout HomeSeer
     ''' </remarks>
     Public Overrides ReadOnly Property Name As String = "NetCam Plugin"
+    'if you have no settings page, you do not need this
     Protected Overrides ReadOnly Property SettingsFileName As String = "NetCamPlugin.ini"
     'Set this to true when you want to have a tab on a HomeSeer device for your plugin.
-    'This is used in this plugin  to allow editing of camera data that is specifically tied to a device.
+    'This is used in this plugin to allow editing of camera data that is specifically tied to a device.
     Public Overrides ReadOnly Property SupportsConfigDevice As Boolean = True
     'these are used to set the path for camera images
     Public Property ExePath As String
@@ -56,13 +57,24 @@ Public Class HSPI
     Public Property htmlPath As String
     'this is used to hold image data between page requests
     Public gImageData As ImageData = Nothing
+    Public WithEvents oTimer As New HSTimer
+    Dim TimerLock As New Object
 
     Public Sub New()
         ExePath = System.IO.Path.GetDirectoryName(System.AppDomain.CurrentDomain.BaseDirectory)
         FilePath = FixPath(ExePath & "/html/" & Id & "/images/")
         htmlPath = "./" & Id
+        oTimer.Interval = 500
+        'Make sure this is done before you load the settings from the ini file.
+        InitializeSettingsPage()
         'this will output debug information from the pluinSDK to the console window.
         LogDebug = True
+    End Sub
+
+    Private Sub InitializeSettingsPage()
+        Dim settingsPage As PageFactory = PageFactory.CreateSettingsPage("SettingsPage", "Settings")
+        settingsPage.WithInput("MaxCount", "Max # of Images Stored", EInputType.Number)
+        Settings.Add(settingsPage.Page)
     End Sub
 
     Protected Overrides Sub Initialize()
@@ -70,6 +82,7 @@ Public Class HSPI
         ' like initializing the starting state of anything needed for the operation of the plugin
 
         'get ini setting from the plugins ini file
+        'if you have no settings page, you do not need this
         LoadSettingsFromIni()
         'To avoid user confusion, only register the page needed to set up the devices for the plugin
         'This will register the page as a feature page as well as include it on the 'Device Add Menu' list.
@@ -82,6 +95,18 @@ Public Class HSPI
         'Not doing anything here
         Return True
     End Function
+
+    Protected Overrides Sub OnSettingsLoad()
+        Dim Value As String
+        Value = HomeSeerSystem.GetINISetting("Settings", "MaxCount", "30", SettingsFileName)
+        Settings.Pages(0).Views(0).UpdateValue(Value)
+    End Sub
+
+    Protected Overrides Sub OnSettingPageSave(pageDelta As Page)
+        Dim Value As Integer
+        Value = pageDelta.Views(0).GetStringValue
+        HomeSeerSystem.SaveINISetting("Settings", "MaxCount", Value, SettingsFileName)
+    End Sub
 
     Private Sub LoadAdditionalPages(Optional IsInit As Boolean = False)
         Dim refIDs As List(Of Integer)
@@ -113,6 +138,8 @@ Public Class HSPI
         Dim iImage As Integer
         Dim arrImages As List(Of String)
         Dim arrCameras As Dictionary(Of Integer, Object)
+        Dim src As String = ""
+        Dim srcid As String = ""
 
         'This allows the plugin to get the PED from all related HomeSeer devices
         'By setting the deviceOnly setting to true, you will only get data back from the top level/root/parent device of each device group
@@ -158,10 +185,17 @@ Public Class HSPI
                         arrImages = GetCameraImages(Camera.Name)
                         sb.AppendHTML("<div Class=""tab-pane fade" & Active & """ role=""tabpanel"" aria-labelledby=""settings-page" & i & ".tab"" id=""settings-page" & i & """>")
                         sb.AppendHTML("    <div Class=""container"">")
+                        sb.AppendHTML("        <div Class=""row"">")
                         For Each sImage As String In arrImages
-                            sb.AppendHTML("<img id=""image-" & iImage & """ src=""/" & Id & "/images/" & sImage & """ height=""100"" width=""200"" /><i class=""fas fa-lg fa-point fa-trash-alt mr-1 ml-1 mb-2"" data-toggle=""modal"" data-target=""#delete_group"" data-tooltip='delete' data-placement='top' title='Delete Image' onclick=""PostBackFunction('" & sImage & "','" & i & "');""></i>")
+                            sb.AppendHTML("<div Class=""col-4"" style=""white-space: nowrap;"">")
+                            sb.AppendHTML(sImage & "<br />")
+                            src = "/" & id & "/images/" & sImage
+                            srcid = "image-" & iImage
+                            sb.AppendHTML("<img id=""" & srcid & """ src=""" & src & """ height=""100"" width=""200"" onClick=""GoModal('" & srcid & "')"" alt=""" & sImage & """/><i class=""fas fa-lg fa-point fa-trash-alt mr-1 ml-1 mb-2"" data-toggle=""modal"" data-target=""#delete_group"" data-tooltip='delete' data-placement='top' title='Delete Image' onclick=""PostBackFunction('" & sImage & "','" & i & "');""></i>")
+                            sb.AppendHTML("</div>")
                             iImage += 1
                         Next
+                        sb.AppendHTML("        </div>")
                         sb.AppendHTML("    </div>")
                         sb.AppendHTML("</div>")
                         Active = ""
@@ -231,7 +265,7 @@ Public Class HSPI
 
         'Go through the properties and if there is data that has been edited for it, then update that property.
         For Each oProperty As PropertyInfo In oProperties
-            pName = pID & oProperty.Name
+            pName = pID & "-" & oProperty.Name
             If dctCamera.Keys.Contains(pName) Then
                 'make sure we send the correct variable type.
                 Select Case oProperty.PropertyType.Name
@@ -264,31 +298,71 @@ Public Class HSPI
         Dim CC As Devices.Controls.ControlEvent
         Dim ParentRef As String
         Dim dv As HsDevice
-        Dim ed As EventData = Nothing
 
         For Each CC In colSend
-            'we need the root device ref of the group, so find out if we already have it.
-            dv = HomeSeerSystem.GetDeviceByRef(CC.TargetRef)
-            If dv.Relationship = ERelationship.Feature Then
-                'it's a feature device so the root of the group is the first associated device
-                ParentRef = dv.AssociatedDevices(0)
-            Else
-                'it's the root so use that ref
-                ParentRef = dv.Ref
-            End If
-            Camera = GetCameraData(ParentRef)
-            TakePicture(Camera)
-
-            Select Case dv.Value
-                Case 0
+            Select Case CC.ControlValue
+                Case 2 'the button was clicked
+                    'we need the root device ref of the group, so find out if we already have it.
+                    dv = HomeSeerSystem.GetDeviceByRef(CC.TargetRef)
+                    If dv.Relationship = ERelationship.Feature Then
+                        'it's a feature device so the root of the group is the first associated device
+                        ParentRef = dv.AssociatedDevices(0)
+                    Else
+                        'it's the root so use that ref
+                        ParentRef = dv.Ref
+                    End If
+                    Camera = GetCameraData(ParentRef)
+                    TakePicture(Camera)
+                    'update the device to signify a picture was taken
                     HomeSeerSystem.UpdateFeatureValueByRef(CC.TargetRef, 1)
-                Case 1
-                    HomeSeerSystem.UpdateFeatureValueByRef(CC.TargetRef, 0)
-            End Select
+                    'start the graphic reset 
+                    ResetCameraIcon(CC.TargetRef)
 
-            'See if we need to fire any of our triggers on the events page
-            CheckTriggers(ParentRef)
+                    'See if we need to fire any of our triggers on the events page
+                    CheckTriggers(ParentRef)
+            End Select
         Next
+    End Sub
+
+    Public Sub ResetCameraIcon(refID As String)
+        SyncLock TimerLock
+            If oTimer.RefIDs.ContainsKey(refID) Then
+                oTimer.RefIDs(refID) = Now
+            Else
+                oTimer.RefIDs.Add(refID, Now)
+            End If
+        End SyncLock
+        If Not oTimer.Enabled Then oTimer.Enabled = True
+    End Sub
+
+    Public Sub Timer_Elapsed(sender As Object, e As System.Timers.ElapsedEventArgs) Handles oTimer.Elapsed
+        SyncLock TimerLock
+            'update the device back to the default status
+            For Each refDT As KeyValuePair(Of String, DateTime) In oTimer.RefIDs
+                If DateDiff(DateInterval.Second, refDT.Value, Now) > 2 Then
+                    HomeSeerSystem.UpdateFeatureValueByRef(refDT.Key, 0)
+                    oTimer.RefIDs.Remove(refDT.Key)
+                End If
+            Next
+        End SyncLock
+        If oTimer.RefIDs.Count = 0 Then oTimer.Enabled = False
+    End Sub
+
+    Public Sub TriggerCamera(refID As String) Implements Take_Picture_Action.IActionListener.TriggerCamera
+        Dim dv As HsDevice
+        Dim colSend As New List(Of Devices.Controls.ControlEvent)
+        Dim ce As Controls.ControlEvent
+        dv = HomeSeerSystem.GetDeviceByRef(refID)
+        'find out if we have the feature or the device
+        If dv.Relationship <> ERelationship.Feature Then
+            'it's a device so the refid we need is the first associated device
+            refID = dv.AssociatedDevices(0)
+        End If
+        ce = New Controls.ControlEvent(refID)
+        ce.ControlValue = 2
+        colSend.Add(ce)
+        SetIOMulti(colSend)
+        HomeSeerSystem.WriteLog(Logging.ELogType.Info, "Picture Taken", Name)
     End Sub
 
     Public Sub CheckTriggers(RefID As String)
@@ -309,7 +383,11 @@ Public Class HSPI
         End If
     End Sub
 
-    Public Overloads Function GetJuiDeviceConfigPage(ByVal deviceRef As String) As String
+    Public Function GetMaxCount() As Integer
+        return HomeSeerSystem.GetINISetting("Settings", "MaxCount", 30, SettingsFileName)
+    End Function
+
+    Public Overrides Function GetJuiDeviceConfigPage(deviceRef As Integer) As String
         'this is called because we set a boolean flag for it (SupportsConfigDevice)
         'This builds a tab on the device specific to the plugin
         Dim Camera As CameraData
@@ -326,7 +404,6 @@ Public Class HSPI
         'add your control objects to your page canvas
         JUIPage.AddView(New InputView(pageID & "-Name", "Name", Camera.Name))
         JUIPage.AddView(New InputView(pageID & "-URL", "URL", Camera.URL))
-        JUIPage.AddView(New InputView(pageID & "-MaxCount", "MaxCount", Camera.MaxCount, EInputType.Number))
 
         'this will build a JSON structure that HomeSeer will render in the same configuration as the rest of the application.
         Return JUIPage.ToJsonString
@@ -425,10 +502,12 @@ Public Class HSPI
 
         'add the properties for your feature.
         ff.WithName("Take Picture")
-        ff.AddButton(1, "Take Picture")
+
         'we're gonna toggle the value to update the datechanged on the device
-        ff.AddGraphicForValue(htmlPath & "/camera-ready.png", 0)
-        ff.AddGraphicForValue(htmlPath & "/camera-ready.png", 1)
+        ff.AddGraphicForValue(htmlPath & "/camera-ready.png", 0, "Camera Ready")
+        ff.AddGraphicForValue(htmlPath & "/camera-snapshot.png", 1, "Picture Taken")
+        'We need the value to be unique to the statuses to allow the button to be activated regardless of the status of the device.
+        ff.AddButton(2, "Take Picture")
 
         'Add the feature data to the device data in the device factory
         df.WithFeature(ff)
