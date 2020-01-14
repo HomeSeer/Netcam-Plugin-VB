@@ -33,7 +33,7 @@
     <DebugType>full</DebugType>
     <DefineDebug>true</DefineDebug>
     <DefineTrace>true</DefineTrace>
-    <OutputPath>..\..\HomeSeer\HomeSeer\</OutputPath>
+    <OutputPath>..\HomeSeer\HomeSeer\</OutputPath>
     <DocumentationFile>HomeSeerSamplePlugin_VB.xml</DocumentationFile>
     <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
   </PropertyGroup>
@@ -79,12 +79,10 @@
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\HomeSeer\HomeSeer\bin\homeseer\Newtonsoft.Json.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>packages\Newtonsoft.Json.12.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="PluginSdk">
-      <HintPath>..\..\HomeSeer\HomeSeer\bin\homeseer\PluginSdk.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\HomeSeer\HomeSeer\bin\homeseer\PluginSdk.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
