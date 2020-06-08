@@ -8,6 +8,7 @@ Imports System.Reflection
 Imports HomeSeer.Jui.Types
 Imports HomeSeer.PluginSdk.Devices
 Imports HomeSeer.PluginSdk.Devices.Identification
+Imports HomeSeer.PluginSdk.Types
 
 ''' <inheritdoc cref="AbstractPlugin"/>
 ''' <summary>
@@ -59,10 +60,11 @@ Public Class HSPI
     Public gImageData As ImageData = Nothing
     Public WithEvents oTimer As New HSTimer
     Dim TimerLock As New Object
+    Public os As EOsType = EOsType.Windows
 
     Public Sub New()
         ExePath = System.IO.Path.GetDirectoryName(System.AppDomain.CurrentDomain.BaseDirectory)
-        FilePath = FixPath(ExePath & "/html/" & Id & "/images/")
+
         htmlPath = "./" & Id
         oTimer.Interval = 500
         'Make sure this is done before you load the settings from the ini file.
@@ -86,8 +88,11 @@ Public Class HSPI
         LoadSettingsFromIni()
         'To avoid user confusion, only register the page needed to set up the devices for the plugin
         'This will register the page as a feature page as well as include it on the 'Device Add Menu' list.
-        HomeSeerSystem.RegisterDeviceIncPage(Id, "AddCameras.html", "Add Cameras")
+        HomeSeerSystem.RegisterDeviceIncPage(Id, "addcameras.html", "Add Cameras")
         LoadAdditionalPages(True)
+
+        os = HomeSeerSystem.GetOsType
+        FilePath = FixPath(ExePath & "/html/" & Id & "/images/")
         Console.WriteLine("Initialized")
     End Sub
 
@@ -115,7 +120,7 @@ Public Class HSPI
         refIDs = HomeSeerSystem.GetRefsByInterface(Id, True)
         'If the plugin is starting up ,then check for 1 or more devices, else only check for the first device created
         If (refIDs.Count > 0 And IsInit) Or refIDs.Count = 1 Then
-            HomeSeerSystem.RegisterFeaturePage(Id, "ViewImages.html", "View Images")
+            HomeSeerSystem.RegisterFeaturePage(Id, "viewimages.html", "View Images")
             ActionTypes.AddActionType(GetType(Take_Picture_Action))
             TriggerTypes.AddTriggerType(GetType(Taken_Picture_Trigger))
         End If

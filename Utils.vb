@@ -134,6 +134,7 @@ Module Utils
 
     Public Sub SaveToFileBinary(ByVal fname As String, ByRef data() As Byte)
         Try
+            Console.WriteLine("save file: " & fname)
             Dim fs As FileStream = File.OpenWrite(FixPath(fname))
             fs.Write(data, 0, data.Length)
             fs.Close()
@@ -143,8 +144,17 @@ Module Utils
     End Sub
 
     Public Function FixPath(ByVal fpath As String) As String
-        fpath = fpath.Replace("/", "\")
-        fpath = fpath.Replace("\\", "\")
+        If _plugin.os = HomeSeer.PluginSdk.Types.EOsType.Linux Then
+            fpath = fpath.Replace("\", "/")
+            fpath = fpath.Replace("//", "/")
+            fpath = fpath.Replace("\/", "/")
+            fpath = fpath.Replace("/\", "/")
+        Else
+            fpath = fpath.Replace("/", "\")
+            fpath = fpath.Replace("\\", "\")
+            fpath = fpath.Replace("\/", "\")
+            fpath = fpath.Replace("/\", "\")
+        End If
         Return fpath
     End Function
 
